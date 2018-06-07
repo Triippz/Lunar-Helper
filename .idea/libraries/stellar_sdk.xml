@@ -1,0 +1,21 @@
+<component name="libraryTable">
+  <library name="stellar-sdk">
+    <ANNOTATIONS>
+      <root url="jar://$PROJECT_DIR$/lib/stellar-sdk.jar!/" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/stellar-sdk.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/stellar-sdk.jar!/" />
+    </JAVADOC>
+    <NATIVE>
+      <root url="jar://$PROJECT_DIR$/lib/stellar-sdk.jar!/" />
+    </NATIVE>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/stellar-sdk.jar!/" />
+    </SOURCES>
+    <jarDirectory url="jar://$PROJECT_DIR$/lib/stellar-sdk.jar!/" recursive="false" />
+    <jarDirectory url="jar://$PROJECT_DIR$/lib/stellar-sdk.jar!/" recursive="false" type="SOURCES" />
+  </library>
+</component>
