@@ -27,25 +27,40 @@ package io.triptrader.controllers;
 import io.triptrader.models.AccountDetails;
 import io.triptrader.models.CreateAccount;
 import io.triptrader.models.Payment;
+import io.triptrader.models.Validate;
+import io.triptrader.utilities.Alerts;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stellar.sdk.KeyPair;
+import org.stellar.sdk.responses.SubmitTransactionResponse;
+import org.stellar.sdk.xdr.MemoType;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 
 public class MainMenuController implements Initializable
 {
     /*********** GLOBAL VARIABLES *********/
+    private final static Logger lunHelpLogger = LoggerFactory.getLogger("lh_logger");
+
     private KeyPair userKey;
     private Boolean isMainNet;
+
+    public static String lastTxHash;
 
     /*********** MODEL CLASSES ************/
     private CreateAccount createAccount;
@@ -88,12 +103,56 @@ public class MainMenuController implements Initializable
         getCreateAccountPane().setVisible(true);
     }
 
+    private void initDefaultPane ( )
+    {
+        getSendPaymentPane().setVisible(false);
+        getMainAccountPane().setVisible(false);
+        getAccountMergePane().setVisible(false);
+        getAllowTrustPane().setVisible(false);
+        getChangeTrustPane().setVisible(false);
+        getCreateAssetPane().setVisible(false);
+        getCreateAccountPane().setVisible(false);
+
+        getDefaultPane().setVisible(true);
+    }
+    private void initSendPayments ( )
+    {
+        /* we need to have an active account to send a payment */
+        if ( userKey == null )
+        {
+            Alert alert = new Alert(Alert.AlertType.WARNING );
+            alert.setHeaderText("No Active Account");
+            alert.setContentText("Need an active account to send a payment. Would you like to use one now?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if ( result.get() == ButtonType.OK)
+                initDefaultPane();
+        } else {
+            getDefaultPane().setVisible(false);
+            getMainAccountPane().setVisible(false);
+            getAccountMergePane().setVisible(false);
+            getAllowTrustPane().setVisible(false);
+            getChangeTrustPane().setVisible(false);
+            getCreateAssetPane().setVisible(false);
+            getCreateAccountPane().setVisible(false);
+
+            getSendPaymentPane().setVisible(true);
+
+            /* get the coin types */
+            try {
+                initPaymentsBalanceTable();
+
+                initAssetsBox();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     /********** Controller Methods ********/
     @SuppressWarnings("unchecked")
     private void initBalancesTable ( ) throws IOException
     {
-        getAssetColumn().setCellValueFactory ( new PropertyValueFactory<>("assetNameColumn") );
-        getBalanceColumn().setCellValueFactory ( new PropertyValueFactory<>("assetBalanceColumn") );
+        getAssetColumn().setCellValueFactory ( new PropertyValueFactory<>("assetName") );
+        getBalanceColumn().setCellValueFactory ( new PropertyValueFactory<>("assetBalance") );
 
         getBalancesTable().setItems ( accountDetails.getAssetBalances ( isMainNet ) );
         getBalancesTable().getColumns().clear();
@@ -101,8 +160,32 @@ public class MainMenuController implements Initializable
     }
 
     @SuppressWarnings("unchecked")
+    private void initPaymentsBalanceTable ( ) throws IOException
+    {
+        if ( accountDetails == null )
+            accountDetails = new AccountDetails ( userKey );
+
+        getPaymentAssetCol().setCellValueFactory( new PropertyValueFactory<>("assetName") );
+        getPaymentBalanceCol().setCellValueFactory( new PropertyValueFactory<>("assetBalance") );
+
+        getPaymentTable().setItems( accountDetails.getAllAssetBalances ( isMainNet ) );
+        getPaymentTable().getColumns().clear();
+        getPaymentTable().getColumns().setAll( getPaymentAssetCol(), getPaymentBalanceCol() );
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initAssetsBox ( ) throws IOException
+    {
+        getPaymentChoiceBox().getItems().clear();
+        getPaymentChoiceBox().setItems( accountDetails.getAvailableAssets ( isMainNet ) );
+    }
+
+    @SuppressWarnings("unchecked")
     private void initTransactionsTable ( ) throws IOException
     {
+        if ( accountDetails == null )
+            accountDetails = new AccountDetails ( userKey );
+
         getTxAssetColumn().setCellValueFactory ( new PropertyValueFactory<>("assetName") );
         getTxAmountColumn().setCellValueFactory ( new PropertyValueFactory<>("amount") );
         getTxTimeColumn().setCellValueFactory ( new PropertyValueFactory<>("date") );
@@ -121,9 +204,6 @@ public class MainMenuController implements Initializable
         getPublicKeyTxtFieldCA().setVisible(true);
         getPvtKeyTxtField().setVisible(true);
         getPvtKeyWarning().setVisible(true);
-        getRecoveryPhraseTxtField().setVisible(true);
-        getRecoveryPhraseWarning().setVisible(true);
-        getShowPhraseButton().setVisible(true);
         getUseAccountButton().setVisible(true);
 
         createAccount = new CreateAccount();
@@ -143,36 +223,52 @@ public class MainMenuController implements Initializable
         getPvtKeyWarning().setVisible(true);
         getPublicKeyTxtFieldCA().setVisible(true);
         getPublicKeyTxtFieldCA().setText ( newAccount.getAccountId() );
-        getRecoveryPhraseTxtField().setText( new String ( newAccount.getSignatureHint().getSignatureHint() ) );
-        getRecoveryPhraseLabel().setVisible(true);
-        getShowPhraseButton().setVisible(true);
         getUseAccountButton().setVisible(true);
 
     }
+
+    private void clearPayments ( )
+    {
+        getPaymentTable().getColumns().clear();
+        getPaymentChoiceBox().getItems().clear();
+        getPaymentDestAddrFld().clear();
+        getPaymentAmountFld().clear();
+        getPaymentMemoFld().clear();
+
+        getViewInExplorerButton().setVisible(false);
+        getPaymentSendButton().setVisible(true);
+    }
+
 
     /********** SCENE ACTIONS ************/
     @FXML
     public void onDefaultEnter ( MouseEvent event )
     {
         // create the keypair
-        userKey = KeyPair.fromSecretSeed ( getPrivateKeyField().getText() );
-
-        // are we using the main or test net?
-        if ( getTestNetCheckBox().isSelected() )
-            isMainNet = false;
-        else
-            isMainNet = true;
-
         try {
-            getAccountBalanceLabel().setText( new AccountDetails( userKey ).getNativeBalance(isMainNet));
-            getAccountTextField().setText ( userKey.getAccountId() );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            userKey = KeyPair.fromSecretSeed ( getPrivateKeyField().getText() );
 
-        // disable the default pane and make the account pane visible
-        getDefaultPane().setVisible(false);
-        initAccountDetails();
+            // are we using the main or test net?
+            isMainNet = !getTestNetCheckBox().isSelected();
+
+            try {
+                getAccountBalanceLabel().setText( new AccountDetails( userKey ).getNativeBalance(isMainNet));
+                getAccountTextField().setText ( userKey.getAccountId() );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // disable the default pane and make the account pane visible
+            getDefaultPane().setVisible(false);
+            initAccountDetails();
+
+        } catch ( Exception e )
+        {
+            Alerts alerts = new Alerts(Alert.AlertType.ERROR,
+                    "Invalid Private Key",
+                    ButtonType.OK);
+            alerts.showAndWait();
+        }
     }
 
     @FXML
@@ -201,22 +297,115 @@ public class MainMenuController implements Initializable
     {
 
         userKey = KeyPair.fromSecretSeed( getPvtKeyTxtField().getText() );
-        if ( getTestAccountCheckBox().isSelected() )
-            isMainNet = false;
+        isMainNet = !getTestAccountCheckBox().isSelected();
+
+
+        if ( getAccountDetails() == null )
+            accountDetails = new AccountDetails ( userKey );
         else
-            isMainNet = true;
+            getAccountDetails().setPair ( userKey );
 
+        getAccountTextField().setText( userKey.getAccountId() );
+        getAccountBalanceLabel().setText( accountDetails.getNativeBalance ( isMainNet ) );
+    }
 
-        try {
-            if ( getAccountDetails() == null )
+    @FXML
+    public void sendPaymentMenuClick ( )
+    {
+        clearPayments();
+        initSendPayments();
+    }
+
+    @FXML
+    public void sendPaymentClick ( )
+    {
+        // make sure they have selected an asset
+        if ( getPaymentChoiceBox().getValue() == null )
+        {
+            Alerts alerts = new Alerts(Alert.AlertType.WARNING,
+                    "Please select an asset",
+                    ButtonType.OK);
+            alerts.showAndWait();
+        } else {
+            if ( payment == null )
+                payment = new Payment( userKey );
+            if ( accountDetails == null )
                 accountDetails = new AccountDetails ( userKey );
-            else
-                getAccountDetails().setPair ( userKey );
 
-            getAccountTextField().setText( userKey.getAccountId() );
-            getAccountBalanceLabel().setText( accountDetails.getNativeBalance ( isMainNet ) );
-        } catch (IOException e) {
-            System.out.println(e.getCause());
+            /* validate information is ok */
+            try {
+                SubmitTransactionResponse transactionResponse;
+
+                if ( Validate.validatePayment(
+                        isMainNet, userKey, accountDetails,
+                        getPaymentDestAddrFld().getText(),
+                        getPaymentChoiceBox().getValue().toString(),
+                        getPaymentAmountFld().getText(),
+                        getPaymentMemoFld().getText(),
+                        MemoType.MEMO_TEXT) )
+                {
+                    transactionResponse = payment.sendPayment (
+                            isMainNet
+                            , userKey
+                            , getPaymentDestAddrFld().getText()
+                            , getPaymentAmountFld().getText()
+                            , getPaymentMemoFld().getText() );
+
+                    if ( transactionResponse.isSuccess() )
+                    {
+                        lunHelpLogger.info("Transaction Sent to: {}\tAmount: {} {}\tMemo: {}"
+                                , getPaymentDestAddrFld().getText()
+                                , getPaymentAmountFld().getText()
+                                , getPaymentChoiceBox().getValue()
+                                , getPaymentMemoFld().getText() );
+
+                        lunHelpLogger.info( "TX Hash: {}", transactionResponse.getHash() );
+                        lastTxHash = transactionResponse.getHash();
+
+                        getPaymentSendButton().setVisible(false);
+                        getViewInExplorerButton().setVisible(true);
+
+                        getAccountBalanceLabel().setText( new AccountDetails( userKey ).getNativeBalance(isMainNet));
+
+                    } else {
+                        Alerts alerts = new Alerts( Alert.AlertType.ERROR,
+                                transactionResponse.getResultXdr(),
+                                ButtonType.OK);
+                        alerts.showAndWait();
+                    }
+                }
+
+            } catch (Exception e) {
+                Alerts alert = new Alerts( Alert.AlertType.ERROR,
+                        e.getMessage(),
+                        ButtonType.OK );
+                alert.showAndWait();
+
+                lunHelpLogger.error("{}", e.getMessage() );
+
+                return;
+            }
+        }
+    }
+
+    @FXML
+    public void viewInExplorerClick ( )
+    {
+        if ( lastTxHash != null)
+        {
+            //Parent root;
+            try {
+                Parent root = FXMLLoader.load( getClass().getClassLoader().getResource("fxml/StellarChain.fxml") );
+                Stage stage = new Stage();
+                stage.setTitle("Stellar Chain - " + lastTxHash );
+                stage.setScene(new Scene(root, 1000, 700));
+                stage.show();
+                // Hide this current window (if this is what you want)
+                //((Node)(event.getSource())).getScene().getWindow().hide();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -312,15 +501,7 @@ public class MainMenuController implements Initializable
     @FXML
     private TextField publicKeyTxtFieldCA;
     @FXML
-    private Label recoveryPhraseLabel;
-    @FXML
-    private TextArea recoveryPhraseTxtField;
-    @FXML
-    private Label recoveryPhraseWarning;
-    @FXML
     private Button createAccountButton;
-    @FXML
-    private Button showPhraseButton;
     @FXML
     private Button useAccountButton;
     @FXML
@@ -329,6 +510,24 @@ public class MainMenuController implements Initializable
     private Label accountBalanceLabel;
     @FXML
     private TextField accountTextField;
+    @FXML
+    private TableView paymentTable;
+    @FXML
+    private TableColumn paymentAssetCol;
+    @FXML
+    private TableColumn paymentBalanceCol;
+    @FXML
+    private TextField paymentDestAddrFld;
+    @FXML
+    private TextField paymentAmountFld;
+    @FXML
+    private TextField paymentMemoFld;
+    @FXML
+    private ComboBox paymentChoiceBox;
+    @FXML
+    private Button paymentSendButton;
+    @FXML
+    private Button viewInExplorerButton;
 
     public AnchorPane getMainAncPane() {
         return mainAncPane;
@@ -717,44 +916,12 @@ public class MainMenuController implements Initializable
     }
 
 
-    public Label getRecoveryPhraseLabel() {
-        return recoveryPhraseLabel;
-    }
-
-    public void setRecoveryPhraseLabel(Label recoveryPhraseLabel) {
-        this.recoveryPhraseLabel = recoveryPhraseLabel;
-    }
-
-    public TextArea getRecoveryPhraseTxtField() {
-        return recoveryPhraseTxtField;
-    }
-
-    public void setRecoveryPhraseTxtField(TextArea recoveryPhraseTxtField) {
-        this.recoveryPhraseTxtField = recoveryPhraseTxtField;
-    }
-
-    public Label getRecoveryPhraseWarning() {
-        return recoveryPhraseWarning;
-    }
-
-    public void setRecoveryPhraseWarning(Label recoveryPhraseWarning) {
-        this.recoveryPhraseWarning = recoveryPhraseWarning;
-    }
-
     public Button getCreateAccountButton() {
         return createAccountButton;
     }
 
     public void setCreateAccountButton(Button createAccountButton) {
         this.createAccountButton = createAccountButton;
-    }
-
-    public Button getShowPhraseButton() {
-        return showPhraseButton;
-    }
-
-    public void setShowPhraseButton(Button showPhraseButton) {
-        this.showPhraseButton = showPhraseButton;
     }
 
     public Button getUseAccountButton() {
@@ -803,5 +970,85 @@ public class MainMenuController implements Initializable
 
     public void setAccountTextField(TextField accountTextField) {
         this.accountTextField = accountTextField;
+    }
+
+    public TableView getPaymentTable() {
+        return paymentTable;
+    }
+
+    public void setPaymentTable(TableView paymentTable) {
+        this.paymentTable = paymentTable;
+    }
+
+    public TableColumn getPaymentAssetCol() {
+        return paymentAssetCol;
+    }
+
+    public void setPaymentAssetCol(TableColumn paymentAssetCol) {
+        this.paymentAssetCol = paymentAssetCol;
+    }
+
+    public TableColumn getPaymentBalanceCol() {
+        return paymentBalanceCol;
+    }
+
+    public void setPaymentBalanceCol(TableColumn paymentBalanceCol) {
+        this.paymentBalanceCol = paymentBalanceCol;
+    }
+
+    public TextField getPaymentDestAddrFld() {
+        return paymentDestAddrFld;
+    }
+
+    public void setPaymentDestAddrFld(TextField paymentDestAddrFld) {
+        this.paymentDestAddrFld = paymentDestAddrFld;
+    }
+
+    public TextField getPaymentAmountFld() {
+        return paymentAmountFld;
+    }
+
+    public void setPaymentAmountFld(TextField paymentAmountFld) {
+        this.paymentAmountFld = paymentAmountFld;
+    }
+
+    public TextField getPaymentMemoFld() {
+        return paymentMemoFld;
+    }
+
+    public void setPaymentMemoFld(TextField paymentMemoFld) {
+        this.paymentMemoFld = paymentMemoFld;
+    }
+
+    public ComboBox getPaymentChoiceBox() {
+        return paymentChoiceBox;
+    }
+
+    public void setPaymentChoiceBox(ComboBox paymentChoiceBox) {
+        this.paymentChoiceBox = paymentChoiceBox;
+    }
+
+    public Button getPaymentSendButton() {
+        return paymentSendButton;
+    }
+
+    public void setPaymentSendButton(Button paymentSendButton) {
+        this.paymentSendButton = paymentSendButton;
+    }
+
+    public Button getViewInExplorerButton() {
+        return viewInExplorerButton;
+    }
+
+    public void setViewInExplorerButton(Button viewInExplorerButton) {
+        this.viewInExplorerButton = viewInExplorerButton;
+    }
+
+    public String getLastTxHash() {
+        return lastTxHash;
+    }
+
+    public void setLastTxHash(String lastTxHash) {
+        MainMenuController.lastTxHash = lastTxHash;
     }
 }

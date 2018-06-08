@@ -25,7 +25,6 @@
 package io.triptrader.models;
 
 import io.triptrader.utilities.Connections;
-import io.triptrader.utilities.Props;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stellar.sdk.*;
@@ -35,13 +34,10 @@ import org.stellar.sdk.responses.AccountResponse;
 import org.stellar.sdk.responses.SubmitTransactionResponse;
 import org.stellar.sdk.responses.operations.OperationResponse;
 import org.stellar.sdk.responses.operations.PaymentOperationResponse;
+import org.stellar.sdk.xdr.MemoType;
 
 import java.io.IOException;
-import java.util.Objects;
 
-import static io.triptrader.utilities.Props.LUNAR_HELPER_PROPS;
-import static io.triptrader.utilities.Props.MAIN_NET;
-import static io.triptrader.utilities.Props.TEST_NET;
 
 public class Payment
 {
@@ -54,7 +50,9 @@ public class Payment
         this.pair = pair;
     }
 
-    public SubmitTransactionResponse sendPayment ( boolean isMainNet, KeyPair srcPair, String destination, String ammount, String memo ) throws IOException
+    public SubmitTransactionResponse sendPayment (boolean isMainNet, KeyPair srcPair,
+                                                  String destination, String ammount,
+                                                  String memo) throws IOException
     {
         Server server = Connections.getServer ( isMainNet );
 

@@ -51,7 +51,7 @@ public class AccountDetails
     }
 
     @SuppressWarnings("Duplicates")
-    public String getNativeBalance ( boolean isMainNet ) throws IOException {
+    public String getNativeBalance ( boolean isMainNet )  {
         Server server = Connections.getServer ( isMainNet );
         String balanceAmount = null;
         String tempBal = null;
@@ -83,11 +83,59 @@ public class AccountDetails
         {
             if ( !balance.getAssetType().equalsIgnoreCase("native") )
             {
+                String assetName;
+                if ( balance.getAssetType().equalsIgnoreCase("native") )
+                    assetName = "XLM";
+                else
+                    assetName = balance.getAssetCode();
+
                 assetBalances.add( new StellarAsset (
-                        balance.getAssetType(), balance.getBalance() ) );
+                        assetName, balance.getBalance() ) );
             }
         }
         return assetBalances;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public ObservableList<StellarAsset> getAllAssetBalances (boolean isMainNet ) throws IOException
+    {
+        Server server = Connections.getServer ( isMainNet );
+
+        ObservableList<StellarAsset> assetBalances = FXCollections.observableArrayList();
+        AccountResponse.Balance balances[] = server.accounts().account( pair ).getBalances();
+
+        for ( AccountResponse.Balance balance : balances )
+        {
+            String assetName;
+            if ( balance.getAssetType().equalsIgnoreCase("native") )
+                assetName = "XLM";
+            else
+                assetName = balance.getAssetCode();
+
+            assetBalances.add( new StellarAsset (
+                    assetName, balance.getBalance() ) );
+        }
+        return assetBalances;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public ObservableList<String> getAvailableAssets (boolean isMainNet ) throws IOException
+    {
+        Server server = Connections.getServer ( isMainNet );
+
+        ObservableList<String> assets = FXCollections.observableArrayList();
+        AccountResponse.Balance balances[] = server.accounts().account( pair ).getBalances();
+
+        for ( AccountResponse.Balance balance : balances )
+        {
+            String assetName;
+            if ( balance.getAssetType().equalsIgnoreCase("native") )
+                assetName = "XLM";
+            else
+                assetName = balance.getAssetCode();
+            assets.add( assetName );
+        }
+        return assets;
     }
 
     @SuppressWarnings("Duplicates")
