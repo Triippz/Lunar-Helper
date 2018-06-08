@@ -254,7 +254,7 @@ public class MainMenuController implements Initializable
             try {
                 getAccountBalanceLabel().setText( new AccountDetails( userKey ).getNativeBalance(isMainNet));
                 getAccountTextField().setText ( userKey.getAccountId() );
-            } catch (IOException e) {
+            } catch ( Exception e) {
                 e.printStackTrace();
             }
 
@@ -297,16 +297,21 @@ public class MainMenuController implements Initializable
     {
 
         userKey = KeyPair.fromSecretSeed( getPvtKeyTxtField().getText() );
-        isMainNet = !getTestAccountCheckBox().isSelected();
-
-
-        if ( getAccountDetails() == null )
-            accountDetails = new AccountDetails ( userKey );
+        if ( getTestAccountCheckBox().isSelected() )
+            isMainNet = false;
         else
-            getAccountDetails().setPair ( userKey );
+            isMainNet = true;
 
-        getAccountTextField().setText( userKey.getAccountId() );
-        getAccountBalanceLabel().setText( accountDetails.getNativeBalance ( isMainNet ) );
+
+        
+            if ( getAccountDetails() == null )
+                accountDetails = new AccountDetails ( userKey );
+            else
+                getAccountDetails().setPair ( userKey );
+
+            getAccountTextField().setText( userKey.getAccountId() );
+            getAccountBalanceLabel().setText( accountDetails.getNativeBalance ( isMainNet ) );
+
     }
 
     @FXML
@@ -1049,6 +1054,6 @@ public class MainMenuController implements Initializable
     }
 
     public void setLastTxHash(String lastTxHash) {
-        MainMenuController.lastTxHash = lastTxHash;
+        this.lastTxHash = lastTxHash;
     }
 }
