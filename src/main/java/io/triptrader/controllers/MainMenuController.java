@@ -29,6 +29,7 @@ import io.triptrader.models.CreateAccount;
 import io.triptrader.models.Payment;
 import io.triptrader.models.Validate;
 import io.triptrader.utilities.Alerts;
+import io.triptrader.utilities.Resolve;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -39,14 +40,17 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stellar.sdk.KeyPair;
+import org.stellar.sdk.requests.ErrorResponse;
 import org.stellar.sdk.responses.SubmitTransactionResponse;
 import org.stellar.sdk.xdr.MemoType;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -82,11 +86,14 @@ public class MainMenuController implements Initializable
         // public key
         getPublicKeyTxtField().setText( userKey.getAccountId() );
         try {
-            getNativeBalanceLabel().setText ( accountDetails.getNativeBalance ( isMainNet ) );
+            getNativeBalanceLabel().setText ( Resolve.assetsToDollar( accountDetails.getAllAssetBalancesArr ( isMainNet ) ) );
             initBalancesTable();
             initTransactionsTable();
-        } catch (IOException e) {
+        } catch ( IOException | URISyntaxException e) {
             e.printStackTrace();
+        } catch ( ErrorResponse errorResponse )
+        {
+            lunHelpLogger.info( "New account. Must add funds." );
         }
     }
 
@@ -95,7 +102,7 @@ public class MainMenuController implements Initializable
         getDefaultPane().setVisible(false);
         getMainAccountPane().setVisible(false);
         getAccountMergePane().setVisible(false);
-        getAllowTrustPane().setVisible(false);
+        getTrustLinesPane().setVisible(false);
         getChangeTrustPane().setVisible(false);
         getCreateAssetPane().setVisible(false);
         getSendPaymentPane().setVisible(false);
@@ -108,7 +115,7 @@ public class MainMenuController implements Initializable
         getSendPaymentPane().setVisible(false);
         getMainAccountPane().setVisible(false);
         getAccountMergePane().setVisible(false);
-        getAllowTrustPane().setVisible(false);
+        getTrustLinesPane().setVisible(false);
         getChangeTrustPane().setVisible(false);
         getCreateAssetPane().setVisible(false);
         getCreateAccountPane().setVisible(false);
@@ -130,7 +137,7 @@ public class MainMenuController implements Initializable
             getDefaultPane().setVisible(false);
             getMainAccountPane().setVisible(false);
             getAccountMergePane().setVisible(false);
-            getAllowTrustPane().setVisible(false);
+            getTrustLinesPane().setVisible(false);
             getChangeTrustPane().setVisible(false);
             getCreateAssetPane().setVisible(false);
             getCreateAccountPane().setVisible(false);
@@ -154,7 +161,7 @@ public class MainMenuController implements Initializable
         getAssetColumn().setCellValueFactory ( new PropertyValueFactory<>("assetName") );
         getBalanceColumn().setCellValueFactory ( new PropertyValueFactory<>("assetBalance") );
 
-        getBalancesTable().setItems ( accountDetails.getAssetBalances ( isMainNet ) );
+        getBalancesTable().setItems ( accountDetails.getAllAssetBalances ( isMainNet ) );
         getBalancesTable().getColumns().clear();
         getBalancesTable().getColumns().setAll( getAssetColumn(), getBalanceColumn() );
     }
@@ -181,8 +188,7 @@ public class MainMenuController implements Initializable
     }
 
     @SuppressWarnings("unchecked")
-    private void initTransactionsTable ( ) throws IOException
-    {
+    private void initTransactionsTable ( ) throws IOException, URISyntaxException {
         if ( accountDetails == null )
             accountDetails = new AccountDetails ( userKey );
 
@@ -208,13 +214,21 @@ public class MainMenuController implements Initializable
 
         createAccount = new CreateAccount();
         KeyPair newAccount = createAccount.createKeyPair();
-        if ( getTestAccountCheckBox().isSelected() ) {
+        if ( getTestAccountCheckBox().isSelected() )
+        {
+            String response = "";
             try {
-                String response = createAccount.createTestAccount ( newAccount );
-                Alert alert = new Alert(Alert.AlertType.INFORMATION, response);
-                alert.show();
+                response = createAccount.createTestAccount ( newAccount );
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Account Created!");
+                alert.showAndWait();
+                getXdrTextArea().setText(response);
+
             } catch (IOException e) {
-                e.printStackTrace();
+                response = e.getMessage();
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Error Creating new Account!");
+            } finally {
+                getXdrTextArea().setVisible(true);
+                getXdrTextArea().setText(response);
             }
         }
 
@@ -225,6 +239,15 @@ public class MainMenuController implements Initializable
         getPublicKeyTxtFieldCA().setText ( newAccount.getAccountId() );
         getUseAccountButton().setVisible(true);
 
+    }
+
+    private void setNetLabel ( )
+    {
+        getWhichNetLabel().setText( isMainNet.toString() );
+        if ( isMainNet )
+            getWhichNetLabel().setTextFill (Color.GREEN);
+        else
+            getWhichNetLabel().setTextFill (Color.RED);
     }
 
     private void clearPayments ( )
@@ -252,10 +275,13 @@ public class MainMenuController implements Initializable
             isMainNet = !getTestNetCheckBox().isSelected();
 
             try {
-                getAccountBalanceLabel().setText( new AccountDetails( userKey ).getNativeBalance(isMainNet));
+                getAccountBalanceLabel().setText( new AccountDetails( userKey ).getNativeBalance( isMainNet ) );
                 getAccountTextField().setText ( userKey.getAccountId() );
+                setNetLabel();
             } catch ( Exception e) {
-                e.printStackTrace();
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, "Error Loading Account Details!");
+                alert.showAndWait();
+                lunHelpLogger.error("{}", e.getMessage());
             }
 
             // disable the default pane and make the account pane visible
@@ -268,6 +294,8 @@ public class MainMenuController implements Initializable
                     "Invalid Private Key",
                     ButtonType.OK);
             alerts.showAndWait();
+
+            lunHelpLogger.error( e.getMessage() );
         }
     }
 
@@ -303,15 +331,17 @@ public class MainMenuController implements Initializable
             isMainNet = true;
 
 
-        
-            if ( getAccountDetails() == null )
-                accountDetails = new AccountDetails ( userKey );
-            else
-                getAccountDetails().setPair ( userKey );
 
-            getAccountTextField().setText( userKey.getAccountId() );
-            getAccountBalanceLabel().setText( accountDetails.getNativeBalance ( isMainNet ) );
+        if ( getAccountDetails() == null )
+            accountDetails = new AccountDetails ( userKey );
+        else
+            getAccountDetails().setPair ( userKey );
 
+        getAccountTextField().setText( userKey.getAccountId() );
+        getAccountBalanceLabel().setText(  accountDetails.getNativeBalance ( isMainNet ) );
+        setNetLabel();
+        getCreateAccountPane().setVisible(false);
+        initAccountDetails();
     }
 
     @FXML
@@ -438,7 +468,7 @@ public class MainMenuController implements Initializable
     @FXML
     private Button changeTrustBut;
     @FXML
-    private Button allowTrustBut;
+    private Button trustLinesButton;
     @FXML
     private Button accountMergeBut;
     @FXML
@@ -452,7 +482,7 @@ public class MainMenuController implements Initializable
     @FXML
     private Pane changeTrustPane;
     @FXML
-    private Pane allowTrustPane;
+    private Pane trustLinesPane;
     @FXML
     private Pane accountMergePane;
     @FXML
@@ -533,6 +563,10 @@ public class MainMenuController implements Initializable
     private Button paymentSendButton;
     @FXML
     private Button viewInExplorerButton;
+    @FXML
+    private TextArea xdrTextArea;
+    @FXML
+    private Label whichNetLabel;
 
     public AnchorPane getMainAncPane() {
         return mainAncPane;
@@ -622,13 +656,6 @@ public class MainMenuController implements Initializable
         this.changeTrustBut = changeTrustBut;
     }
 
-    public Button getAllowTrustBut() {
-        return allowTrustBut;
-    }
-
-    public void setAllowTrustBut(Button allowTrustBut) {
-        this.allowTrustBut = allowTrustBut;
-    }
 
     public Button getAccountMergeBut() {
         return accountMergeBut;
@@ -678,13 +705,6 @@ public class MainMenuController implements Initializable
         this.changeTrustPane = changeTrustPane;
     }
 
-    public Pane getAllowTrustPane() {
-        return allowTrustPane;
-    }
-
-    public void setAllowTrustPane(Pane allowTrustPane) {
-        this.allowTrustPane = allowTrustPane;
-    }
 
     public Pane getAccountMergePane() {
         return accountMergePane;
@@ -1055,5 +1075,37 @@ public class MainMenuController implements Initializable
 
     public void setLastTxHash(String lastTxHash) {
         this.lastTxHash = lastTxHash;
+    }
+
+    public Button getTrustLinesButton() {
+        return trustLinesButton;
+    }
+
+    public void setTrustLinesButton(Button trustLinesButton) {
+        this.trustLinesButton = trustLinesButton;
+    }
+
+    public Pane getTrustLinesPane() {
+        return trustLinesPane;
+    }
+
+    public void setTrustLinesPane(Pane trustLinesPane) {
+        this.trustLinesPane = trustLinesPane;
+    }
+
+    public TextArea getXdrTextArea() {
+        return xdrTextArea;
+    }
+
+    public void setXdrTextArea(TextArea xdrTextArea) {
+        this.xdrTextArea = xdrTextArea;
+    }
+
+    public Label getWhichNetLabel() {
+        return whichNetLabel;
+    }
+
+    public void setWhichNetLabel(Label whichNetLabel) {
+        this.whichNetLabel = whichNetLabel;
     }
 }

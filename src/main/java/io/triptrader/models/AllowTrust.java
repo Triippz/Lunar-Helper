@@ -24,5 +24,24 @@
 
 package io.triptrader.models;
 
-public class AllowTrust {
+import io.triptrader.utilities.Connections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stellar.sdk.AllowTrustOperation;
+import org.stellar.sdk.KeyPair;
+import org.stellar.sdk.Server;
+import org.stellar.sdk.xdr.AllowTrustOp;
+
+public class AllowTrust
+{
+    private final static Logger lunHelpLogger = LoggerFactory.getLogger("lh_logger");
+
+    public AllowTrust () { }
+
+    public void buildTrustLine (boolean isMainNet, KeyPair trustor, String assetCode, boolean authorize )
+    {
+        Server server = Connections.getServer ( isMainNet );
+        AllowTrustOperation.Builder builder = new AllowTrustOperation.Builder ( trustor, assetCode, authorize);
+        builder.build();
+    }
 }

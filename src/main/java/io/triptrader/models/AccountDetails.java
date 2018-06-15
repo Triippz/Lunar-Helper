@@ -27,22 +27,35 @@ package io.triptrader.models;
 import io.triptrader.models.assets.StellarAsset;
 import io.triptrader.models.assets.Transactions;
 import io.triptrader.utilities.Connections;
+import io.triptrader.utilities.Format;
+import io.triptrader.utilities.Resolve;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.stellar.sdk.*;
+import org.stellar.sdk.Asset;
 import org.stellar.sdk.requests.ErrorResponse;
-import org.stellar.sdk.requests.PaymentsRequestBuilder;
-import org.stellar.sdk.requests.TransactionsRequestBuilder;
+
 import org.stellar.sdk.responses.AccountResponse;
 import org.stellar.sdk.responses.Page;
-import org.stellar.sdk.responses.operations.OperationResponse;
-import org.stellar.sdk.responses.operations.PaymentOperationResponse;
+import org.stellar.sdk.responses.TransactionResponse;
 
+import org.stellar.sdk.xdr.*;
+import org.stellar.sdk.xdr.Transaction;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Base64;
 
 
 public class AccountDetails
 {
+    private final static Logger lunHelpLogger = LoggerFactory.getLogger("lh_logger");
+
+
     private KeyPair pair;
 
     public AccountDetails ( KeyPair pair )
@@ -97,7 +110,7 @@ public class AccountDetails
     }
 
     @SuppressWarnings("Duplicates")
-    public ObservableList<StellarAsset> getAllAssetBalances (boolean isMainNet ) throws IOException
+    public ObservableList<StellarAsset> getAllAssetBalances ( boolean isMainNet ) throws IOException
     {
         Server server = Connections.getServer ( isMainNet );
 
@@ -114,6 +127,30 @@ public class AccountDetails
 
             assetBalances.add( new StellarAsset (
                     assetName, balance.getBalance() ) );
+        }
+        return assetBalances;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public StellarAsset[] getAllAssetBalancesArr ( boolean isMainNet ) throws IOException
+    {
+        Server server = Connections.getServer ( isMainNet );
+
+        AccountResponse.Balance balances[] = server.accounts().account( pair ).getBalances();
+        StellarAsset assetBalances[] = new StellarAsset[ balances.length ];
+
+        int i = 0;
+        for ( AccountResponse.Balance balance : balances )
+        {
+            String assetName;
+            if ( balance.getAssetType().equalsIgnoreCase("native") )
+                assetName = "XLM";
+            else
+                assetName = balance.getAssetCode();
+
+            assetBalances[i] = new StellarAsset (
+                    assetName, balance.getBalance() );
+            i++;
         }
         return assetBalances;
     }
@@ -138,42 +175,123 @@ public class AccountDetails
         return assets;
     }
 
-    @SuppressWarnings("Duplicates")
+/*    @SuppressWarnings("Duplicates")
     public ObservableList<Transactions> getTransactions ( boolean isMainNet ) throws IOException
     {
         Server server = Connections.getServer ( isMainNet );
+        server.ledgers().limit(50);
+
         ObservableList<Transactions> transactions = FXCollections.observableArrayList();
-        Page<OperationResponse> page = server.payments().execute();
+        Page<TransactionResponse> page = server.transactions().forAccount( pair ).execute();
+        ArrayList<TransactionResponse> transactionResponses = page.getRecords();
 
-        for (OperationResponse payment : page.getRecords()) {
-            payment.getPagingToken();
-            if ( payment instanceof PaymentOperationResponse )
+        for ( TransactionResponse txResponse : transactionResponses )
+        {
+            byte[] bytes = Base64.getDecoder().decode( txResponse.getEnvelopeXdr() );
+            XdrDataInputStream in = new XdrDataInputStream(new ByteArrayInputStream(bytes));
+            Transaction tx = TransactionEnvelope.decode(in).getTx();
+
+            *//* a tx can have multiple operations, so iterate through (potentially) all of them *//*
+            for ( int i = 0; i < tx.getOperations().length; i++ )
             {
-                String amount = ((PaymentOperationResponse) payment).getAmount();
-                Asset asset = ((PaymentOperationResponse) payment).getAsset();
+                if ( tx.getOperations()[i].getBody().getDiscriminant() == OperationType.PAYMENT )
+                {
+                    String amount = tx.getOperations()[i].getBody().getPaymentOp().getAmount().getInt64().toString();
+                    String coin;
+                    if ( tx.getOperations()[i].getBody().getPaymentOp().getAsset().getDiscriminant() == AssetType.ASSET_TYPE_NATIVE )
+                        coin = "XLM";
+                    else
+                        coin = String.valueOf(tx.getOperations()[i].getBody().getPaymentOp().getAsset().getAlphaNum12().getAssetCode());
+                    String time = "?";
+                    String memo = tx.getMemo().getText();
 
-                String assetName;
-                if (asset.equals(new AssetTypeNative())) {
-                    assetName = "XLM";
-                } else {
-                    StringBuilder assetNameBuilder = new StringBuilder();
-                    assetNameBuilder.append(((AssetTypeCreditAlphaNum) asset).getCode());
-                    assetNameBuilder.append(":");
-                    assetNameBuilder.append(( (AssetTypeCreditAlphaNum) asset).getIssuer().getAccountId());
-                    assetName = assetNameBuilder.toString();
+                    transactions.add( new Transactions( coin, Format.parseAmountString( amount ), time, memo ) );
                 }
-                StringBuilder output = new StringBuilder();
-                output.append(amount);
-                output.append(" ");
-                output.append(assetName);
-                output.append(" from ");
-                output.append(((PaymentOperationResponse) payment).getFrom().getAccountId());
-                System.out.println(output.toString());
-
-                //add it to the list
-                transactions.add( new Transactions ( assetName, amount, "?", "?") );
             }
+        }
+        return transactions;
+    }
 
+    @SuppressWarnings("Duplicates")
+    public void getPageTransactions ( boolean isMainNet ) throws IOException, URISyntaxException {
+        Server server = Connections.getServer ( isMainNet );
+
+        ObservableList<Transactions> transactions = FXCollections.observableArrayList();
+        Page<TransactionResponse> page = server.transactions().forAccount( pair ).execute();
+        boolean hasNext = true;
+
+        while ( hasNext )
+        {
+            if ( page.getRecords().size() == 0 )
+            {
+                System.out.println("End of records");
+                break;
+            } else {
+                System.out.println("Records for account "+ page.getRecords().get(0).getSourceAccount().getAccountId() );
+                byte[] bytes = Base64.getDecoder().decode( page.getRecords().get(0).getEnvelopeXdr() );
+                XdrDataInputStream in = new XdrDataInputStream(new ByteArrayInputStream(bytes));
+                Transaction tx = TransactionEnvelope.decode(in).getTx();
+
+                *//* a tx can have multiple operations, so iterate through (potentially) all of them *//*
+                for ( int i = 0; i < tx.getOperations().length; i++ )
+                {
+                    if ( tx.getOperations()[i].getBody().getDiscriminant() == OperationType.PAYMENT )
+                    {
+                        String amount = tx.getOperations()[i].getBody().getPaymentOp().getAmount().getInt64().toString();
+                        String coin;
+                        if ( tx.getOperations()[i].getBody().getPaymentOp().getAsset().getDiscriminant() == AssetType.ASSET_TYPE_NATIVE )
+                            coin = "XLM";
+                        else
+                            coin = String.valueOf(tx.getOperations()[i].getBody().getPaymentOp().getAsset().getAlphaNum12().getAssetCode());
+                        String time = "?";
+                        String memo = tx.getMemo().getText();
+
+                        transactions.add( new Transactions( coin, Format.parseAmountString( amount ), time, memo ) );
+
+                        StringBuilder builder = new StringBuilder()
+                                .append("Coin ").append(coin)
+                                .append("\nAmount: ").append(amount)
+                                .append("\n");
+                        System.out.println(builder.toString());
+                    }
+                }
+            }
+        }
+    }*/
+
+    @SuppressWarnings("Duplicates")
+    public ObservableList<Transactions> getTransactions ( boolean isMainNet ) throws IOException {
+        Server server = Connections.getServer ( isMainNet );
+        ObservableList<Transactions> transactions = FXCollections.observableArrayList();
+        ArrayList<TransactionResponse> transactionResponses = server.transactions().forAccount( pair ).limit(100).execute().getRecords();
+
+        lunHelpLogger.debug("{}", transactionResponses.size() );
+
+        for ( TransactionResponse response : transactionResponses )
+        {
+            byte[] bytes = Base64.getDecoder().decode( response.getEnvelopeXdr() );
+            XdrDataInputStream in = new XdrDataInputStream(new ByteArrayInputStream(bytes));
+            Transaction tx = TransactionEnvelope.decode(in).getTx();
+
+            /* a tx can have multiple operations, so iterate through (potentially) all of them */
+            for ( int i = 0; i < tx.getOperations().length; i++ )
+            {
+                if ( tx.getOperations()[i].getBody().getDiscriminant() == OperationType.PAYMENT )
+                {
+                    org.stellar.sdk.xdr.Asset asset = tx.getOperations()[i].getBody().getPaymentOp().getAsset();
+
+                    String amount = tx.getOperations()[i].getBody().getPaymentOp().getAmount().getInt64().toString();
+                    String coin = Resolve.assetName ( asset );
+                    String memo = tx.getMemo().getText();
+
+                    lunHelpLogger.debug( "{}\t{}", coin,  Format.parseAmountString( amount ));
+                    transactions.add( new Transactions(
+                              coin
+                            , Format.parseAmountString( amount )
+                            , Format.time ( response.getCreatedAt() )
+                            , memo ) );
+                }
+            }
         }
         return transactions;
     }

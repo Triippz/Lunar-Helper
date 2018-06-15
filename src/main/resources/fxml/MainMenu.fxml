@@ -11,6 +11,7 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.effect.InnerShadow?>
@@ -27,9 +28,11 @@
                   <Button fx:id="createAccountBut" mnemonicParsing="false" onMouseClicked="#createAccount" prefHeight="29.0" prefWidth="176.0" text="Create Account" />
                   <Button fx:id="sendPaymentBut" layoutY="29.0" mnemonicParsing="false" onMouseClicked="#sendPaymentMenuClick" prefHeight="27.0" prefWidth="176.0" text="Send Payment" />
                   <Button fx:id="changeTrustBut" layoutY="56.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Change Trust" />
-                  <Button fx:id="allowTrustBut" layoutY="83.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Allow Trust" />
+                  <Button fx:id="trustLinesButton" layoutY="83.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Trust Lines" />
                   <Button fx:id="accountMergeBut" layoutY="110.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Account Merge" />
                   <Button fx:id="createAssetBut" layoutY="137.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Create Asset" />
+                  <Label layoutX="8.0" layoutY="595.0" prefHeight="29.0" prefWidth="59.0" text="Main Net:" textFill="#f8f8f8" />
+                  <Label fx:id="whichNetLabel" alignment="CENTER" layoutX="69.0" layoutY="601.0" prefHeight="17.0" prefWidth="106.0" text="Not Connected" />
                </children>
             </AnchorPane>
           <AnchorPane fx:id="rightAncPane" minHeight="0.0" minWidth="0.0" prefHeight="627.0" prefWidth="758.0">
@@ -50,9 +53,10 @@
                         </Label>
                         <Label fx:id="publicKeyLabelCA" layoutX="16.0" layoutY="268.0" text="Public Key" />
                         <TextField fx:id="publicKeyTxtFieldCA" layoutX="102.0" layoutY="263.0" prefHeight="27.0" prefWidth="610.0" visible="false" />
-                        <Button fx:id="createAccountButton" layoutX="311.0" layoutY="425.0" mnemonicParsing="false" onMouseClicked="#createNewAccountClick" text="Create New Account!" />
-                        <Button fx:id="useAccountButton" layoutX="319.0" layoutY="425.0" mnemonicParsing="false" onMouseClicked="#useNewAccountClick" text="Use New Account?" visible="false" />
+                        <Button fx:id="createAccountButton" layoutX="311.0" layoutY="428.0" mnemonicParsing="false" onMouseClicked="#createNewAccountClick" text="Create New Account!" />
+                        <Button fx:id="useAccountButton" layoutX="317.0" layoutY="539.0" mnemonicParsing="false" onMouseClicked="#useNewAccountClick" text="Use New Account?" visible="false" />
                         <CheckBox fx:id="testAccountCheckBox" layoutX="329.0" layoutY="461.0" mnemonicParsing="false" text="Test Account?" />
+                        <TextArea editable="false" layoutX="12.0" layoutY="308.0" prefHeight="225.0" prefWidth="748.0" visible="false" fx:id="xdrTextArea" />
                      </children></Pane>
                   <Pane fx:id="sendPaymentPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
@@ -99,10 +103,10 @@
                         </ComboBox>
                      </children></Pane>
                   <Pane fx:id="changeTrustPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                  <Pane fx:id="allowTrustPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <Pane fx:id="trustLinesPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                   <Pane fx:id="accountMergePane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                   <Pane fx:id="createAssetPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                  <Pane fx:id="defaultPane" prefHeight="629.0" prefWidth="712.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <Pane fx:id="defaultPane" prefHeight="629.0" prefWidth="712.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
                         <Label alignment="CENTER" contentDisplay="CENTER" layoutX="43.0" prefHeight="119.0" prefWidth="712.0" style="-fx-text-fill: black;" text="Please enter your account's PRIVATE key" textAlignment="CENTER" textOverrun="CENTER_ELLIPSIS">
                            <font>
@@ -136,7 +140,7 @@
                               <Font size="24.0" />
                            </font>
                         </Label>
-                        <Label fx:id="nativeBalanceLabel" alignment="CENTER" layoutX="273.0" layoutY="183.0" prefHeight="27.0" prefWidth="148.0" text="Label">
+                        <Label fx:id="nativeBalanceLabel" alignment="CENTER" layoutX="225.0" layoutY="183.0" prefHeight="27.0" prefWidth="148.0">
                            <font>
                               <Font size="15.0" />
                            </font>
@@ -158,14 +162,19 @@
                             <TableColumn fx:id="balanceColumn" prefWidth="138.0" text="Balance" />
                           </columns>
                         </TableView>
-                        <TableView fx:id="transactionTable" layoutX="289.0" layoutY="229.0" prefHeight="397.0" prefWidth="475.0">
+                        <TableView fx:id="transactionTable" layoutX="253.0" layoutY="229.0" prefHeight="397.0" prefWidth="511.0">
                           <columns>
                             <TableColumn fx:id="txAssetColumn" prefWidth="75.0" text="Asset" />
                             <TableColumn fx:id="txAmountColumn" prefWidth="109.0" text="Amount" />
-                              <TableColumn fx:id="txTimeColumn" prefWidth="77.0" text="Time" />
-                              <TableColumn fx:id="txMemoColumn" prefWidth="213.0" text="Memo" />
+                              <TableColumn fx:id="txTimeColumn" prefWidth="103.0" text="Time" />
+                              <TableColumn fx:id="txMemoColumn" prefWidth="223.0" text="Memo" />
                           </columns>
                         </TableView>
+                        <Label layoutX="373.0" layoutY="187.0" text="USD">
+                           <font>
+                              <Font size="15.0" />
+                           </font>
+                        </Label>
                      </children>
                   </Pane>
                </children>
