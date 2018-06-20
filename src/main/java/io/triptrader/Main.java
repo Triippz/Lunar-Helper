@@ -36,7 +36,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         Parent root = FXMLLoader.load( getClass().getResource("/fxml/MainMenu.fxml") );
         primaryStage.setTitle("Lunar Helper");
-        primaryStage.setScene(new Scene(root, 960, 659));
+        primaryStage.setScene(new Scene(root, 1098, 659));
         primaryStage.setResizable(false);
         primaryStage.show();
     }

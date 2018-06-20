@@ -30,12 +30,39 @@ public class Transactions
     private String amount;
     private String date;
     private String memo;
+    private String toFrom;
+    private Boolean wasSent;
 
     public Transactions(String assetName, String amount, String date, String memo) {
         this.assetName = assetName;
         this.amount = amount;
         this.date = date;
         this.memo = memo;
+    }
+
+    public Transactions(String assetName, String amount, String date,
+                        String memo, String toFrom, Boolean wasSent ) {
+        this.assetName = assetName;
+        this.amount = amount;
+        this.date = date;
+        this.memo = memo;
+        this.toFrom = toFrom;
+        this.wasSent = wasSent;
+    }
+
+    public Transactions(String assetName, String amount, String date, Boolean wasSent) {
+        this.assetName = assetName;
+        this.amount = amount;
+        this.date = date;
+        this.wasSent = wasSent;
+    }
+
+    public Transactions(String assetName, String amount, String date, String toFrom, Boolean wasSent) {
+        this.assetName = assetName;
+        this.amount = amount;
+        this.date = date;
+        this.toFrom = toFrom;
+        this.wasSent = wasSent;
     }
 
     public String getAssetName() {
@@ -68,5 +95,17 @@ public class Transactions
 
     public void setMemo(String memo) {
         this.memo = memo;
+    }
+
+    public String getToFrom() {
+        return toFrom;
+    }
+
+    public void setToFrom(String toFrom) {
+        this.toFrom = toFrom;
+    }
+
+    public Boolean getWasSent() {
+        return wasSent;
     }
 }

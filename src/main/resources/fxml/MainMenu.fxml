@@ -19,84 +19,84 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="mainAncPane" fx:id="mainAncPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="659.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.triptrader.controllers.MainMenuController">
+<AnchorPane id="mainAncPane" fx:id="mainAncPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="659.0" prefWidth="1098.0" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.triptrader.controllers.MainMenuController">
    <children>
-      <SplitPane fx:id="splitPane" dividerPositions="0.1921" layoutX="14.0" layoutY="28.0" prefHeight="629.0" prefWidth="897.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="28.0">
+      <SplitPane fx:id="splitPane" dividerPositions="0.1921" layoutX="14.0" layoutY="28.0" prefHeight="634.0" prefWidth="1098.0" AnchorPane.bottomAnchor="-3.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="28.0">
         <items>
           <AnchorPane fx:id="leftAncPane" minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0" style="-fx-background-color: black;">
                <children>
-                  <Button fx:id="createAccountBut" mnemonicParsing="false" onMouseClicked="#createAccount" prefHeight="29.0" prefWidth="176.0" text="Create Account" />
-                  <Button fx:id="sendPaymentBut" layoutY="29.0" mnemonicParsing="false" onMouseClicked="#sendPaymentMenuClick" prefHeight="27.0" prefWidth="176.0" text="Send Payment" />
-                  <Button fx:id="changeTrustBut" layoutY="56.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Change Trust" />
-                  <Button fx:id="trustLinesButton" layoutY="83.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Trust Lines" />
-                  <Button fx:id="accountMergeBut" layoutY="110.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Account Merge" />
-                  <Button fx:id="createAssetBut" layoutY="137.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="176.0" text="Create Asset" />
-                  <Label layoutX="8.0" layoutY="595.0" prefHeight="29.0" prefWidth="59.0" text="Main Net:" textFill="#f8f8f8" />
-                  <Label fx:id="whichNetLabel" alignment="CENTER" layoutX="69.0" layoutY="601.0" prefHeight="17.0" prefWidth="106.0" text="Not Connected" />
+                  <Button fx:id="createAccountBut" layoutX="1.0" layoutY="38.0" mnemonicParsing="false" onMouseClicked="#createAccount" prefHeight="29.0" prefWidth="207.0" text="Create Account" />
+                  <Button fx:id="sendPaymentBut" layoutX="1.0" layoutY="67.0" mnemonicParsing="false" onMouseClicked="#sendPaymentMenuClick" prefHeight="27.0" prefWidth="207.0" text="Send Payment" />
+                  <Button fx:id="changeTrustBut" layoutX="1.0" layoutY="121.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Change Trust" />
+                  <Button fx:id="trustLinesButton" layoutX="1.0" layoutY="148.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Trust Lines" />
+                  <Button fx:id="accountMergeBut" layoutX="1.0" layoutY="175.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Account Merge" />
+                  <Button fx:id="createAssetBut" layoutX="1.0" layoutY="202.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Create Asset" />
+                  <Button fx:id="viewTransactionsButton" layoutX="1.0" layoutY="94.0" mnemonicParsing="false" onMouseClicked="#viewTransactionsClick" prefHeight="27.0" prefWidth="207.0" text="View Transactions" />
+                  <Button fx:id="accountDetailsBut" layoutX="1.0" layoutY="9.0" mnemonicParsing="false" onMouseClicked="#accountDetailsClick" prefHeight="29.0" prefWidth="207.0" text="Account Details" />
                </children>
             </AnchorPane>
           <AnchorPane fx:id="rightAncPane" minHeight="0.0" minWidth="0.0" prefHeight="627.0" prefWidth="758.0">
                <children>
                   <Pane fx:id="createAccountPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <Label layoutX="194.0" layoutY="44.0" prefHeight="43.0" prefWidth="383.0" text="New Account Creation">
+                        <Label layoutX="268.0" layoutY="40.0" prefHeight="43.0" prefWidth="383.0" text="New Account Creation">
                            <font>
                               <Font size="35.0" />
                            </font>
                         </Label>
                         <Label fx:id="pvtKeyLabel" layoutX="14.0" layoutY="111.0" text="Private Key" />
-                        <TextField fx:id="pvtKeyTxtField" layoutX="112.0" layoutY="106.0" prefHeight="27.0" prefWidth="610.0" visible="false" />
+                        <TextField fx:id="pvtKeyTxtField" layoutX="112.0" layoutY="106.0" prefHeight="27.0" prefWidth="671.0" visible="false" />
                         <Label fx:id="pvtKeyWarning" layoutX="162.0" layoutY="133.0" prefHeight="18.0" prefWidth="511.0" text="DO NOT LOSE OR GIVE THIS KEY TO ANYONE. STORE THIS IN A SECURE AREA (Preferably non-digitally)" textFill="#f50606" visible="false">
                            <font>
                               <Font size="10.0" />
                            </font>
                         </Label>
                         <Label fx:id="publicKeyLabelCA" layoutX="16.0" layoutY="268.0" text="Public Key" />
-                        <TextField fx:id="publicKeyTxtFieldCA" layoutX="102.0" layoutY="263.0" prefHeight="27.0" prefWidth="610.0" visible="false" />
-                        <Button fx:id="createAccountButton" layoutX="311.0" layoutY="428.0" mnemonicParsing="false" onMouseClicked="#createNewAccountClick" text="Create New Account!" />
-                        <Button fx:id="useAccountButton" layoutX="317.0" layoutY="539.0" mnemonicParsing="false" onMouseClicked="#useNewAccountClick" text="Use New Account?" visible="false" />
-                        <CheckBox fx:id="testAccountCheckBox" layoutX="329.0" layoutY="461.0" mnemonicParsing="false" text="Test Account?" />
-                        <TextArea editable="false" layoutX="12.0" layoutY="308.0" prefHeight="225.0" prefWidth="748.0" visible="false" fx:id="xdrTextArea" />
+                        <TextField fx:id="publicKeyTxtFieldCA" layoutX="102.0" layoutY="263.0" prefHeight="27.0" prefWidth="671.0" visible="false" />
+                        <Button fx:id="createAccountButton" layoutX="373.0" layoutY="428.0" mnemonicParsing="false" onMouseClicked="#createNewAccountClick" text="Create New Account!" />
+                        <Button fx:id="useAccountButton" layoutX="381.0" layoutY="541.0" mnemonicParsing="false" onMouseClicked="#useNewAccountClick" text="Use New Account?" visible="false" />
+                        <CheckBox fx:id="testAccountCheckBox" layoutX="391.0" layoutY="461.0" mnemonicParsing="false" text="Test Account?" />
+                        <TextArea editable="false" layoutX="12.0" layoutY="308.0" prefHeight="225.0" prefWidth="853.0" visible="false" fx:id="xdrTextArea" />
                      </children></Pane>
                   <Pane fx:id="sendPaymentPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <Label alignment="CENTER" layoutX="4.0" layoutY="14.0" prefHeight="17.0" prefWidth="763.0" text="Send Payment">
+                        <Label alignment="CENTER" layoutX="293.0" layoutY="25.0" prefHeight="42.0" prefWidth="293.0" text="Send Payment">
                            <font>
                               <Font size="34.0" />
                            </font>
                         </Label>
-                        <TableView fx:id="paymentTable" layoutX="14.0" layoutY="78.0" prefHeight="119.0" prefWidth="740.0">
+                        <TableView fx:id="paymentTable" layoutX="79.0" layoutY="79.0" prefHeight="119.0" prefWidth="740.0">
                           <columns>
                             <TableColumn fx:id="paymentAssetCol" editable="false" prefWidth="358.0" sortable="false" text="Asset" />
                             <TableColumn fx:id="paymentBalanceCol" editable="false" prefWidth="381.0" sortable="false" text="Balance" />
                           </columns>
                         </TableView>
-                        <Label layoutX="333.0" layoutY="212.0" text="Select Asset">
+                        <Label layoutX="386.0" layoutY="213.0" text="Select Asset">
                            <font>
                               <Font size="18.0" />
                            </font>
                         </Label>
-                        <Label layoutX="305.0" layoutY="293.0" text="Destination Address">
+                        <Label layoutX="361.0" layoutY="293.0" text="Destination Address">
                            <font>
                               <Font size="17.0" />
                            </font>
                         </Label>
-                        <TextField fx:id="paymentDestAddrFld" alignment="CENTER" layoutX="101.0" layoutY="323.0" prefHeight="27.0" prefWidth="570.0" />
-                        <Label layoutX="357.0" layoutY="357.0" text="Amount">
+                        <TextField fx:id="paymentDestAddrFld" alignment="CENTER" layoutX="164.0" layoutY="321.0" prefHeight="27.0" prefWidth="570.0" />
+                        <Label layoutX="410.0" layoutY="357.0" text="Amount">
                            <font>
                               <Font size="16.0" />
                            </font>
                         </Label>
-                        <TextField fx:id="paymentAmountFld" alignment="CENTER" layoutX="291.0" layoutY="377.0" prefHeight="27.0" prefWidth="191.0" />
-                        <Label layoutX="363.0" layoutY="419.0" text="Memo">
+                        <TextField fx:id="paymentAmountFld" alignment="CENTER" layoutX="347.0" layoutY="377.0" prefHeight="27.0" prefWidth="191.0" />
+                        <Label layoutX="419.0" layoutY="425.0" text="Memo">
                            <font>
                               <Font size="16.0" />
                            </font>
                         </Label>
-                        <TextField fx:id="paymentMemoFld" alignment="CENTER" layoutX="101.0" layoutY="445.0" prefHeight="27.0" prefWidth="570.0" />
-                        <Button fx:id="paymentSendButton" layoutX="324.0" layoutY="521.0" mnemonicParsing="false" onMouseClicked="#sendPaymentClick" text="Send Transaction" />
-                        <Button fx:id="viewInExplorerButton" layoutX="326.0" layoutY="521.0" mnemonicParsing="false" onMouseClicked="#viewInExplorerClick" text="View in Explorer" visible="false" />
-                        <ComboBox fx:id="paymentChoiceBox" layoutX="312.0" layoutY="245.0" prefWidth="150.0">
+                        <TextField fx:id="paymentMemoFld" alignment="CENTER" layoutX="158.0" layoutY="456.0" prefHeight="27.0" prefWidth="570.0" />
+                        <Button fx:id="paymentSendButton" layoutX="380.0" layoutY="521.0" mnemonicParsing="false" onMouseClicked="#sendPaymentClick" text="Send Transaction" />
+                        <Button fx:id="viewInExplorerButton" layoutX="381.0" layoutY="521.0" mnemonicParsing="false" onMouseClicked="#viewInExplorerClick" text="View in Explorer" visible="false" />
+                        <ComboBox fx:id="paymentChoiceBox" layoutX="364.0" layoutY="247.0" prefWidth="150.0">
                            <effect>
                               <DropShadow />
                            </effect>
@@ -108,71 +108,87 @@
                   <Pane fx:id="createAssetPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                   <Pane fx:id="defaultPane" prefHeight="629.0" prefWidth="712.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <Label alignment="CENTER" contentDisplay="CENTER" layoutX="43.0" prefHeight="119.0" prefWidth="712.0" style="-fx-text-fill: black;" text="Please enter your account's PRIVATE key" textAlignment="CENTER" textOverrun="CENTER_ELLIPSIS">
+                        <Label alignment="CENTER" contentDisplay="CENTER" layoutX="177.0" layoutY="85.0" prefHeight="82.0" prefWidth="528.0" style="-fx-text-fill: black;" text="Please enter your account's PRIVATE key" textAlignment="CENTER" textOverrun="CENTER_ELLIPSIS">
                            <font>
                               <Font name="System Bold" size="26.0" />
                            </font>
                         </Label>
-                        <PasswordField fx:id="privateKeyField" layoutX="139.0" layoutY="216.0" prefHeight="48.0" prefWidth="493.0" promptText="Private Key">
+                        <PasswordField fx:id="privateKeyField" layoutX="205.0" layoutY="215.0" prefHeight="48.0" prefWidth="493.0" promptText="Private Key">
                            <font>
                               <Font size="15.0" />
                            </font>
                         </PasswordField>
-                        <Button fx:id="defaultEnterButton" layoutX="319.0" layoutY="374.0" mnemonicParsing="false" onMouseClicked="#onDefaultEnter" prefHeight="39.0" prefWidth="132.0" style="-fx-background-color: Gray; -fx-text-fill: Black;" text="Enter">
+                        <Button fx:id="defaultEnterButton" layoutX="386.0" layoutY="366.0" mnemonicParsing="false" onMouseClicked="#onDefaultEnter" prefHeight="39.0" prefWidth="132.0" style="-fx-background-color: Gray; -fx-text-fill: Black;" text="Enter">
                            <effect>
                               <InnerShadow />
                            </effect>
                         </Button>
-                        <CheckBox fx:id="testNetCheckBox" layoutX="343.0" layoutY="315.0" mnemonicParsing="false" text="Test-Net?" />
+                        <CheckBox fx:id="testNetCheckBox" layoutX="409.0" layoutY="315.0" mnemonicParsing="false" text="Test-Net?" />
                      </children>
                   </Pane>
                   <Pane fx:id="mainAccountPane" prefHeight="629.0" prefWidth="712.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <Label alignment="CENTER" layoutX="197.0" layoutY="14.0" prefHeight="48.0" prefWidth="318.0" text="Stellar Account Details" underline="true">
+                        <Label alignment="CENTER" layoutX="282.0" layoutY="14.0" prefHeight="48.0" prefWidth="318.0" text="Stellar Account Details" underline="true">
                            <font>
                               <Font name="System Bold" size="24.0" />
                            </font>
                         </Label>
                         <Label layoutX="14.0" layoutY="80.0" prefHeight="17.0" prefWidth="76.0" text="Public Key:" />
                         <Label layoutX="14.0" layoutY="118.0" prefHeight="17.0" prefWidth="76.0" text="Private Key:" />
-                        <Label alignment="CENTER" layoutX="188.0" layoutY="154.0" prefHeight="27.0" prefWidth="318.0" text="Balance">
+                        <Label alignment="CENTER" layoutX="375.0" layoutY="154.0" prefHeight="29.0" prefWidth="132.0" text="Balance">
                            <font>
                               <Font size="24.0" />
                            </font>
                         </Label>
-                        <Label fx:id="nativeBalanceLabel" alignment="CENTER" layoutX="225.0" layoutY="183.0" prefHeight="27.0" prefWidth="148.0">
+                        <Label fx:id="nativeBalanceLabel" alignment="CENTER_RIGHT" layoutX="225.0" layoutY="183.0" prefHeight="27.0" prefWidth="258.0">
                            <font>
                               <Font size="15.0" />
                            </font>
                         </Label>
-                        <TextField fx:id="publicKeyTxtField" editable="false" layoutX="151.0" layoutY="75.0" prefHeight="27.0" prefWidth="475.0">
+                        <TextField fx:id="publicKeyTxtField" alignment="CENTER" editable="false" layoutX="151.0" layoutY="75.0" prefHeight="27.0" prefWidth="640.0">
                            <font>
                               <Font size="10.0" />
                            </font>
                         </TextField>
-                        <TextField fx:id="privateKeyTxtField" editable="false" layoutX="151.0" layoutY="113.0" prefHeight="27.0" prefWidth="475.0">
+                        <TextField fx:id="privateKeyTxtField" alignment="CENTER" editable="false" layoutX="151.0" layoutY="113.0" prefHeight="27.0" prefWidth="640.0">
                            <font>
                               <Font size="10.0" />
                            </font>
                         </TextField>
-                        <Button fx:id="showPvtKeyButton" layoutX="674.0" layoutY="113.0" mnemonicParsing="false" onMouseClicked="#showPrivateKey" text="Show" />
+                        <Button fx:id="showPvtKeyButton" layoutX="807.0" layoutY="113.0" mnemonicParsing="false" onMouseClicked="#showPrivateKey" text="Show" />
                         <TableView fx:id="balancesTable" layoutX="14.0" layoutY="229.0" prefHeight="397.0" prefWidth="230.0">
                           <columns>
                             <TableColumn fx:id="assetColumn" prefWidth="91.0" text="Asset" />
                             <TableColumn fx:id="balanceColumn" prefWidth="138.0" text="Balance" />
                           </columns>
                         </TableView>
-                        <TableView fx:id="transactionTable" layoutX="253.0" layoutY="229.0" prefHeight="397.0" prefWidth="511.0">
+                        <TableView fx:id="transactionTable" layoutX="257.0" layoutY="229.0" prefHeight="397.0" prefWidth="610.0">
                           <columns>
-                            <TableColumn fx:id="txAssetColumn" prefWidth="75.0" text="Asset" />
-                            <TableColumn fx:id="txAmountColumn" prefWidth="109.0" text="Amount" />
-                              <TableColumn fx:id="txTimeColumn" prefWidth="103.0" text="Time" />
-                              <TableColumn fx:id="txMemoColumn" prefWidth="223.0" text="Memo" />
+                            <TableColumn fx:id="txAssetColumn" prefWidth="113.0" text="Asset" />
+                            <TableColumn fx:id="txAmountColumn" prefWidth="204.0" text="Amount" />
+                              <TableColumn fx:id="txTimeColumn" prefWidth="292.0" text="Time" />
                           </columns>
                         </TableView>
-                        <Label layoutX="373.0" layoutY="187.0" text="USD">
+                        <Label layoutX="491.0" layoutY="187.0" text="USD">
                            <font>
                               <Font size="15.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </Pane>
+                  <Pane fx:id="viewTransactionsPane" prefHeight="629.0" prefWidth="770.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <TableView fx:id="txPaneTable" layoutX="2.0" layoutY="44.0" prefHeight="584.0" prefWidth="872.0">
+                          <columns>
+                            <TableColumn fx:id="txPaneAssetCol" prefWidth="86.0" text="Asset" />
+                            <TableColumn fx:id="txPaneAmountCol" prefWidth="142.0" text="Amount" />
+                              <TableColumn fx:id="txPaneDateCol" prefWidth="98.0" sortType="DESCENDING" text="Date" />
+                              <TableColumn fx:id="txPaneToFromCol" prefWidth="544.0" text="To/From" />
+                          </columns>
+                        </TableView>
+                        <Label alignment="CENTER" layoutX="359.0" layoutY="14.0" prefHeight="28.0" prefWidth="163.0" text="Transactions">
+                           <font>
+                              <Font size="23.0" />
                            </font>
                         </Label>
                      </children>
@@ -185,12 +201,12 @@
         <menus>
           <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
             <items>
-              <MenuItem fx:id="exitMenuItem" mnemonicParsing="false" text="Exit" />
+              <MenuItem fx:id="exitMenuItem" mnemonicParsing="false" onAction="#exitMenuClick" text="Exit" />
             </items>
           </Menu>
           <Menu fx:id="helpMenu" mnemonicParsing="false" text="Help">
             <items>
-              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About" />
+              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" onAction="#aboutMenuClick" text="About" />
             </items>
           </Menu>
         </menus>
@@ -201,8 +217,10 @@
             <Font name="System Bold" size="9.0" />
          </font>
       </TextField>
-      <Label layoutX="646.0" layoutY="6.0" text="Balance:" />
-      <Label fx:id="accountBalanceLabel" alignment="CENTER_RIGHT" layoutX="718.0" layoutY="6.0" prefHeight="17.0" prefWidth="163.0" textFill="#06f812" />
-      <Label layoutX="881.0" layoutY="6.0" text="XLM" />
+      <Label layoutX="662.0" layoutY="6.0" text="Balance:" />
+      <Label fx:id="accountBalanceLabel" alignment="CENTER_RIGHT" layoutX="719.0" layoutY="6.0" prefHeight="17.0" prefWidth="163.0" textFill="#06f812" />
+      <Label layoutX="888.0" layoutY="6.0" text="XLM" />
+      <Label layoutX="936.0" prefHeight="29.0" prefWidth="59.0" text="Main Net:" textFill="#0d0d0d" />
+      <Label fx:id="whichNetLabel" alignment="CENTER" layoutX="995.0" layoutY="6.0" prefHeight="17.0" prefWidth="100.0" text="Not Connected" />
    </children>
 </AnchorPane>

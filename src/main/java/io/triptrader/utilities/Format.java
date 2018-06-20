@@ -45,9 +45,9 @@ public class Format
         else if ( amount.length() <= 7 ){
 
             while ( builder.toString().length() != 7 )
-                builder.insert( amount.length() - amount.length(), "0");
+                builder.insert(0, "0");
 
-            builder.insert( amount.length() - amount.length(), "0.");
+            builder.insert(0, "0.");
         }
         return builder.toString();
     }
@@ -74,5 +74,10 @@ public class Format
             }
         }
         return builder.toString();
+    }
+
+    public static String sentPayment ( String amount )
+    {
+        return new StringBuilder( amount ).insert(0, "-").toString();
     }
 }

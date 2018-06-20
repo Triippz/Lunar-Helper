@@ -28,8 +28,10 @@ import io.triptrader.models.AccountDetails;
 import io.triptrader.models.CreateAccount;
 import io.triptrader.models.Payment;
 import io.triptrader.models.Validate;
+import io.triptrader.models.assets.Transactions;
 import io.triptrader.utilities.Alerts;
 import io.triptrader.utilities.Resolve;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -52,6 +54,7 @@ import org.stellar.sdk.xdr.MemoType;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -78,8 +81,23 @@ public class MainMenuController implements Initializable
         getDefaultPane().setVisible(true);
     }
 
+    private void clearAllPanes ( )
+    {
+        getDefaultPane().setVisible(false);
+        getViewTransactionsPane().setVisible(false);
+        getCreateAccountPane().setVisible(false);
+        getTrustLinesPane().setVisible(false);
+        getSendPaymentPane().setVisible(false);
+        getCreateAssetPane().setVisible(false);
+        getAccountMergePane().setVisible(false);
+        getMainAccountPane().setVisible(false);
+        getChangeTrustPane().setVisible(false);
+    }
+
+
     private void initAccountDetails ( )
     {
+        clearAllPanes();
         getMainAccountPane().setVisible(true);
         accountDetails = new AccountDetails ( userKey );
 
@@ -89,7 +107,7 @@ public class MainMenuController implements Initializable
             getNativeBalanceLabel().setText ( Resolve.assetsToDollar( accountDetails.getAllAssetBalancesArr ( isMainNet ) ) );
             initBalancesTable();
             initTransactionsTable();
-        } catch ( IOException | URISyntaxException e) {
+        } catch ( IOException  e) {
             e.printStackTrace();
         } catch ( ErrorResponse errorResponse )
         {
@@ -99,27 +117,13 @@ public class MainMenuController implements Initializable
 
     private void initCreateAccount ( )
     {
-        getDefaultPane().setVisible(false);
-        getMainAccountPane().setVisible(false);
-        getAccountMergePane().setVisible(false);
-        getTrustLinesPane().setVisible(false);
-        getChangeTrustPane().setVisible(false);
-        getCreateAssetPane().setVisible(false);
-        getSendPaymentPane().setVisible(false);
-
+        clearAllPanes();
         getCreateAccountPane().setVisible(true);
     }
 
     private void initDefaultPane ( )
     {
-        getSendPaymentPane().setVisible(false);
-        getMainAccountPane().setVisible(false);
-        getAccountMergePane().setVisible(false);
-        getTrustLinesPane().setVisible(false);
-        getChangeTrustPane().setVisible(false);
-        getCreateAssetPane().setVisible(false);
-        getCreateAccountPane().setVisible(false);
-
+        clearAllPanes();
         getDefaultPane().setVisible(true);
     }
     private void initSendPayments ( )
@@ -134,14 +138,7 @@ public class MainMenuController implements Initializable
             if ( result.get() == ButtonType.OK)
                 initDefaultPane();
         } else {
-            getDefaultPane().setVisible(false);
-            getMainAccountPane().setVisible(false);
-            getAccountMergePane().setVisible(false);
-            getTrustLinesPane().setVisible(false);
-            getChangeTrustPane().setVisible(false);
-            getCreateAssetPane().setVisible(false);
-            getCreateAccountPane().setVisible(false);
-
+            clearAllPanes();
             getSendPaymentPane().setVisible(true);
 
             /* get the coin types */
@@ -154,6 +151,13 @@ public class MainMenuController implements Initializable
             }
         }
     }
+
+    private void initTransactions( ) throws IOException {
+        clearAllPanes();
+        getViewTransactionsPane().setVisible(true);
+        initFullTransactionsTable();
+    }
+
     /********** Controller Methods ********/
     @SuppressWarnings("unchecked")
     private void initBalancesTable ( ) throws IOException
@@ -188,18 +192,36 @@ public class MainMenuController implements Initializable
     }
 
     @SuppressWarnings("unchecked")
-    private void initTransactionsTable ( ) throws IOException, URISyntaxException {
+    private void initTransactionsTable ( ) throws IOException {
         if ( accountDetails == null )
             accountDetails = new AccountDetails ( userKey );
 
         getTxAssetColumn().setCellValueFactory ( new PropertyValueFactory<>("assetName") );
         getTxAmountColumn().setCellValueFactory ( new PropertyValueFactory<>("amount") );
         getTxTimeColumn().setCellValueFactory ( new PropertyValueFactory<>("date") );
-        getTxMemoColumn().setCellValueFactory ( new PropertyValueFactory<>("memo") );
 
         getTransactionTable().setItems( accountDetails.getTransactions ( isMainNet ) );
         getTransactionTable().getColumns().clear();
-        getTransactionTable().getColumns().setAll ( getTxAssetColumn(), getTxAmountColumn(), getTxTimeColumn(), getTxMemoColumn() );
+        getTransactionTable().getColumns().setAll ( getTxAssetColumn(), getTxAmountColumn(), getTxTimeColumn() );
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initFullTransactionsTable ( ) throws IOException
+    {
+        if ( accountDetails == null )
+            accountDetails = new AccountDetails ( userKey );
+
+        getTxPaneAssetCol().setCellValueFactory ( new PropertyValueFactory<>("assetName") );
+        getTxPaneAmountCol().setCellValueFactory ( new PropertyValueFactory<>("amount") );
+        getTxPaneDateCol().setCellValueFactory ( new PropertyValueFactory<>("date") );
+        getTxPaneToFromCol().setCellValueFactory ( new PropertyValueFactory<>("toFrom") );
+
+        getTxPaneTable().setItems( accountDetails.getAllPaymentsNM ( isMainNet ) );
+        getTxPaneTable().getColumns().clear();
+        getTxPaneTable().getColumns().setAll ( getTxAssetColumn(), getTxAmountColumn(), getTxTimeColumn(), getTxPaneToFromCol() );
+
+        // set the colors depending on payment type
+
     }
 
     private void showNewAccount ( )
@@ -325,10 +347,7 @@ public class MainMenuController implements Initializable
     {
 
         userKey = KeyPair.fromSecretSeed( getPvtKeyTxtField().getText() );
-        if ( getTestAccountCheckBox().isSelected() )
-            isMainNet = false;
-        else
-            isMainNet = true;
+        isMainNet = !getTestAccountCheckBox().isSelected();
 
 
 
@@ -418,7 +437,6 @@ public class MainMenuController implements Initializable
 
                 lunHelpLogger.error("{}", e.getMessage() );
 
-                return;
             }
         }
     }
@@ -430,19 +448,53 @@ public class MainMenuController implements Initializable
         {
             //Parent root;
             try {
-                Parent root = FXMLLoader.load( getClass().getClassLoader().getResource("fxml/StellarChain.fxml") );
+                Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getClassLoader().getResource("fxml/StellarChain.fxml")));
                 Stage stage = new Stage();
                 stage.setTitle("Stellar Chain - " + lastTxHash );
                 stage.setScene(new Scene(root, 1000, 700));
                 stage.show();
-                // Hide this current window (if this is what you want)
-                //((Node)(event.getSource())).getScene().getWindow().hide();
             }
             catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
+
+    @FXML
+    public void viewTransactionsClick ( )
+    {
+        try {
+            initTransactions();
+
+            if ( payment == null )
+                payment = new Payment( userKey );
+
+        } catch (IOException e) {
+            lunHelpLogger.error( e.getMessage() );
+        }
+    }
+
+    @FXML
+    public void accountDetailsClick ( )
+    {
+        initAccountDetails();
+    }
+
+    /*********************************************
+     *                  MENU ACTIONS
+     *********************************************/
+    @FXML
+    public void aboutMenuClick ( )
+    {
+
+    }
+
+    @FXML
+    public void exitMenuClick ( )
+    {
+        System.exit(0);
+    }
+
 
     /* SCENE CONTROLS */
     @FXML
@@ -524,8 +576,6 @@ public class MainMenuController implements Initializable
     @FXML
     private TableColumn txTimeColumn;
     @FXML
-    private TableColumn txMemoColumn;
-    @FXML
     private Label pvtKeyLabel;
     @FXML
     private TextField pvtKeyTxtField;
@@ -567,6 +617,18 @@ public class MainMenuController implements Initializable
     private TextArea xdrTextArea;
     @FXML
     private Label whichNetLabel;
+    @FXML
+    private TableView txPaneTable;
+    @FXML
+    private TableColumn txPaneAssetCol;
+    @FXML
+    private TableColumn txPaneAmountCol;
+    @FXML
+    private TableColumn txPaneDateCol;
+    @FXML
+    private TableColumn txPaneToFromCol;
+    @FXML
+    private Pane viewTransactionsPane;
 
     public AnchorPane getMainAncPane() {
         return mainAncPane;
@@ -681,7 +743,7 @@ public class MainMenuController implements Initializable
         this.rightAncPane = rightAncPane;
     }
 
-    public Pane getCreateAccountPane() {
+    private Pane getCreateAccountPane() {
         return createAccountPane;
     }
 
@@ -689,7 +751,7 @@ public class MainMenuController implements Initializable
         this.createAccountPane = createAccountPane;
     }
 
-    public Pane getSendPaymentPane() {
+    private Pane getSendPaymentPane() {
         return sendPaymentPane;
     }
 
@@ -697,7 +759,7 @@ public class MainMenuController implements Initializable
         this.sendPaymentPane = sendPaymentPane;
     }
 
-    public Pane getChangeTrustPane() {
+    private Pane getChangeTrustPane() {
         return changeTrustPane;
     }
 
@@ -706,7 +768,7 @@ public class MainMenuController implements Initializable
     }
 
 
-    public Pane getAccountMergePane() {
+    private Pane getAccountMergePane() {
         return accountMergePane;
     }
 
@@ -714,7 +776,7 @@ public class MainMenuController implements Initializable
         this.accountMergePane = accountMergePane;
     }
 
-    public Pane getCreateAssetPane() {
+    private Pane getCreateAssetPane() {
         return createAssetPane;
     }
 
@@ -722,7 +784,7 @@ public class MainMenuController implements Initializable
         this.createAssetPane = createAssetPane;
     }
 
-    public Pane getDefaultPane() {
+    private Pane getDefaultPane() {
         return defaultPane;
     }
 
@@ -730,7 +792,7 @@ public class MainMenuController implements Initializable
         this.defaultPane = defaultPane;
     }
 
-    public Pane getMainAccountPane() {
+    private Pane getMainAccountPane() {
         return mainAccountPane;
     }
 
@@ -738,7 +800,7 @@ public class MainMenuController implements Initializable
         this.mainAccountPane = mainAccountPane;
     }
 
-    public PasswordField getPrivateKeyField() {
+    private PasswordField getPrivateKeyField() {
         return privateKeyField;
     }
 
@@ -795,7 +857,7 @@ public class MainMenuController implements Initializable
         this.privateKeyLabel = privateKeyLabel;
     }
 
-    public Label getNativeBalanceLabel() {
+    private Label getNativeBalanceLabel() {
         return nativeBalanceLabel;
     }
 
@@ -803,7 +865,7 @@ public class MainMenuController implements Initializable
         this.nativeBalanceLabel = nativeBalanceLabel;
     }
 
-    public AccountDetails getAccountDetails() {
+    private AccountDetails getAccountDetails() {
         return accountDetails;
     }
 
@@ -819,7 +881,7 @@ public class MainMenuController implements Initializable
         isMainNet = mainNet;
     }
 
-    public CheckBox getTestNetCheckBox() {
+    private CheckBox getTestNetCheckBox() {
         return testNetCheckBox;
     }
 
@@ -827,7 +889,7 @@ public class MainMenuController implements Initializable
         this.testNetCheckBox = testNetCheckBox;
     }
 
-    public TextField getPublicKeyTxtField() {
+    private TextField getPublicKeyTxtField() {
         return publicKeyTxtField;
     }
 
@@ -835,7 +897,7 @@ public class MainMenuController implements Initializable
         this.publicKeyTxtField = publicKeyTxtField;
     }
 
-    public TextField getPrivateKeyTxtField() {
+    private TextField getPrivateKeyTxtField() {
         return privateKeyTxtField;
     }
 
@@ -851,7 +913,7 @@ public class MainMenuController implements Initializable
         this.showPvtKeyButton = showPvtKeyButton;
     }
 
-    public TableView getBalancesTable() {
+    private TableView getBalancesTable() {
         return balancesTable;
     }
 
@@ -859,7 +921,7 @@ public class MainMenuController implements Initializable
         this.balancesTable = balancesTable;
     }
 
-    public TableColumn getAssetColumn() {
+    private TableColumn getAssetColumn() {
         return assetColumn;
     }
 
@@ -867,7 +929,7 @@ public class MainMenuController implements Initializable
         this.assetColumn = assetColumn;
     }
 
-    public TableColumn getBalanceColumn() {
+    private TableColumn getBalanceColumn() {
         return balanceColumn;
     }
 
@@ -875,7 +937,7 @@ public class MainMenuController implements Initializable
         this.balanceColumn = balanceColumn;
     }
 
-    public TableView getTransactionTable() {
+    private TableView getTransactionTable() {
         return transactionTable;
     }
 
@@ -883,7 +945,7 @@ public class MainMenuController implements Initializable
         this.transactionTable = transactionTable;
     }
 
-    public TableColumn getTxAssetColumn() {
+    private TableColumn getTxAssetColumn() {
         return txAssetColumn;
     }
 
@@ -892,15 +954,7 @@ public class MainMenuController implements Initializable
     }
 
 
-    public TableColumn getTxMemoColumn() {
-        return txMemoColumn;
-    }
-
-    public void setTxMemoColumn(TableColumn txMemoColumn) {
-        this.txMemoColumn = txMemoColumn;
-    }
-
-    public TableColumn getTxAmountColumn() {
+    private TableColumn getTxAmountColumn() {
         return txAmountColumn;
     }
 
@@ -908,7 +962,7 @@ public class MainMenuController implements Initializable
         this.txAmountColumn = txAmountColumn;
     }
 
-    public TableColumn getTxTimeColumn() {
+    private TableColumn getTxTimeColumn() {
         return txTimeColumn;
     }
 
@@ -924,7 +978,7 @@ public class MainMenuController implements Initializable
         this.pvtKeyLabel = pvtKeyLabel;
     }
 
-    public TextField getPvtKeyTxtField() {
+    private TextField getPvtKeyTxtField() {
         return pvtKeyTxtField;
     }
 
@@ -932,7 +986,7 @@ public class MainMenuController implements Initializable
         this.pvtKeyTxtField = pvtKeyTxtField;
     }
 
-    public Label getPvtKeyWarning() {
+    private Label getPvtKeyWarning() {
         return pvtKeyWarning;
     }
 
@@ -941,7 +995,7 @@ public class MainMenuController implements Initializable
     }
 
 
-    public Button getCreateAccountButton() {
+    private Button getCreateAccountButton() {
         return createAccountButton;
     }
 
@@ -949,7 +1003,7 @@ public class MainMenuController implements Initializable
         this.createAccountButton = createAccountButton;
     }
 
-    public Button getUseAccountButton() {
+    private Button getUseAccountButton() {
         return useAccountButton;
     }
 
@@ -965,7 +1019,7 @@ public class MainMenuController implements Initializable
         this.publicKeyLabelCA = publicKeyLabelCA;
     }
 
-    public TextField getPublicKeyTxtFieldCA() {
+    private TextField getPublicKeyTxtFieldCA() {
         return publicKeyTxtFieldCA;
     }
 
@@ -973,7 +1027,7 @@ public class MainMenuController implements Initializable
         this.publicKeyTxtFieldCA = publicKeyTxtFieldCA;
     }
 
-    public CheckBox getTestAccountCheckBox() {
+    private CheckBox getTestAccountCheckBox() {
         return testAccountCheckBox;
     }
 
@@ -981,7 +1035,7 @@ public class MainMenuController implements Initializable
         this.testAccountCheckBox = testAccountCheckBox;
     }
 
-    public Label getAccountBalanceLabel() {
+    private Label getAccountBalanceLabel() {
         return accountBalanceLabel;
     }
 
@@ -989,7 +1043,7 @@ public class MainMenuController implements Initializable
         this.accountBalanceLabel = accountBalanceLabel;
     }
 
-    public TextField getAccountTextField() {
+    private TextField getAccountTextField() {
         return accountTextField;
     }
 
@@ -997,7 +1051,7 @@ public class MainMenuController implements Initializable
         this.accountTextField = accountTextField;
     }
 
-    public TableView getPaymentTable() {
+    private TableView getPaymentTable() {
         return paymentTable;
     }
 
@@ -1005,7 +1059,7 @@ public class MainMenuController implements Initializable
         this.paymentTable = paymentTable;
     }
 
-    public TableColumn getPaymentAssetCol() {
+    private TableColumn getPaymentAssetCol() {
         return paymentAssetCol;
     }
 
@@ -1013,7 +1067,7 @@ public class MainMenuController implements Initializable
         this.paymentAssetCol = paymentAssetCol;
     }
 
-    public TableColumn getPaymentBalanceCol() {
+    private TableColumn getPaymentBalanceCol() {
         return paymentBalanceCol;
     }
 
@@ -1021,7 +1075,7 @@ public class MainMenuController implements Initializable
         this.paymentBalanceCol = paymentBalanceCol;
     }
 
-    public TextField getPaymentDestAddrFld() {
+    private TextField getPaymentDestAddrFld() {
         return paymentDestAddrFld;
     }
 
@@ -1029,7 +1083,7 @@ public class MainMenuController implements Initializable
         this.paymentDestAddrFld = paymentDestAddrFld;
     }
 
-    public TextField getPaymentAmountFld() {
+    private TextField getPaymentAmountFld() {
         return paymentAmountFld;
     }
 
@@ -1037,7 +1091,7 @@ public class MainMenuController implements Initializable
         this.paymentAmountFld = paymentAmountFld;
     }
 
-    public TextField getPaymentMemoFld() {
+    private TextField getPaymentMemoFld() {
         return paymentMemoFld;
     }
 
@@ -1045,7 +1099,7 @@ public class MainMenuController implements Initializable
         this.paymentMemoFld = paymentMemoFld;
     }
 
-    public ComboBox getPaymentChoiceBox() {
+    private ComboBox getPaymentChoiceBox() {
         return paymentChoiceBox;
     }
 
@@ -1053,7 +1107,7 @@ public class MainMenuController implements Initializable
         this.paymentChoiceBox = paymentChoiceBox;
     }
 
-    public Button getPaymentSendButton() {
+    private Button getPaymentSendButton() {
         return paymentSendButton;
     }
 
@@ -1061,7 +1115,7 @@ public class MainMenuController implements Initializable
         this.paymentSendButton = paymentSendButton;
     }
 
-    public Button getViewInExplorerButton() {
+    private Button getViewInExplorerButton() {
         return viewInExplorerButton;
     }
 
@@ -1074,7 +1128,7 @@ public class MainMenuController implements Initializable
     }
 
     public void setLastTxHash(String lastTxHash) {
-        this.lastTxHash = lastTxHash;
+        MainMenuController.lastTxHash = lastTxHash;
     }
 
     public Button getTrustLinesButton() {
@@ -1085,7 +1139,7 @@ public class MainMenuController implements Initializable
         this.trustLinesButton = trustLinesButton;
     }
 
-    public Pane getTrustLinesPane() {
+    private Pane getTrustLinesPane() {
         return trustLinesPane;
     }
 
@@ -1093,7 +1147,7 @@ public class MainMenuController implements Initializable
         this.trustLinesPane = trustLinesPane;
     }
 
-    public TextArea getXdrTextArea() {
+    private TextArea getXdrTextArea() {
         return xdrTextArea;
     }
 
@@ -1101,11 +1155,55 @@ public class MainMenuController implements Initializable
         this.xdrTextArea = xdrTextArea;
     }
 
-    public Label getWhichNetLabel() {
+    private Label getWhichNetLabel() {
         return whichNetLabel;
     }
 
     public void setWhichNetLabel(Label whichNetLabel) {
         this.whichNetLabel = whichNetLabel;
+    }
+
+    private TableView getTxPaneTable() {
+        return txPaneTable;
+    }
+
+    public void setTxPaneTable(TableView txPaneTable) {
+        this.txPaneTable = txPaneTable;
+    }
+
+    private TableColumn getTxPaneAssetCol() {
+        return txPaneAssetCol;
+    }
+
+    public void setTxPaneAssetCol(TableColumn txPaneAssetCol) {
+        this.txPaneAssetCol = txPaneAssetCol;
+    }
+
+    private TableColumn getTxPaneAmountCol() {
+        return txPaneAmountCol;
+    }
+
+    public void setTxPaneAmountCol(TableColumn txPaneAmountCol) {
+        this.txPaneAmountCol = txPaneAmountCol;
+    }
+
+    private TableColumn getTxPaneDateCol() {
+        return txPaneDateCol;
+    }
+
+    public void setTxPaneDateCol(TableColumn txPaneDateCol) {
+        this.txPaneDateCol = txPaneDateCol;
+    }
+
+    private TableColumn getTxPaneToFromCol() {
+        return txPaneToFromCol;
+    }
+
+    public void setTxPaneToFromCol(TableColumn txPaneToFromCol) {
+        this.txPaneToFromCol = txPaneToFromCol;
+    }
+
+    private Pane getViewTransactionsPane() {
+        return viewTransactionsPane;
     }
 }

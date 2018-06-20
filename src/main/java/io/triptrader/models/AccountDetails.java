@@ -34,13 +34,15 @@ import javafx.collections.ObservableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stellar.sdk.*;
-import org.stellar.sdk.Asset;
 import org.stellar.sdk.requests.ErrorResponse;
 
+import org.stellar.sdk.requests.PaymentsRequestBuilder;
 import org.stellar.sdk.responses.AccountResponse;
 import org.stellar.sdk.responses.Page;
 import org.stellar.sdk.responses.TransactionResponse;
 
+import org.stellar.sdk.responses.operations.OperationResponse;
+import org.stellar.sdk.responses.operations.PaymentOperationResponse;
 import org.stellar.sdk.xdr.*;
 import org.stellar.sdk.xdr.Transaction;
 
@@ -54,8 +56,7 @@ import java.util.Base64;
 public class AccountDetails
 {
     private final static Logger lunHelpLogger = LoggerFactory.getLogger("lh_logger");
-
-
+    private static String myToken = null;
     private KeyPair pair;
 
     public AccountDetails ( KeyPair pair )
@@ -175,37 +176,109 @@ public class AccountDetails
         return assets;
     }
 
-/*    @SuppressWarnings("Duplicates")
-    public ObservableList<Transactions> getTransactions ( boolean isMainNet ) throws IOException
-    {
+    @SuppressWarnings("Duplicates")
+    public ObservableList<Transactions> getTransactions ( boolean isMainNet ) throws IOException {
         Server server = Connections.getServer ( isMainNet );
-        server.ledgers().limit(50);
-
+        PaymentsRequestBuilder paymentsRequest = server.payments().forAccount( pair ).limit(100);
         ObservableList<Transactions> transactions = FXCollections.observableArrayList();
-        Page<TransactionResponse> page = server.transactions().forAccount( pair ).execute();
-        ArrayList<TransactionResponse> transactionResponses = page.getRecords();
+        Page<OperationResponse> page = paymentsRequest.execute();
 
-        for ( TransactionResponse txResponse : transactionResponses )
+        String lastToken = loadLastPagingToken();
+        if (lastToken != null) {
+            paymentsRequest.cursor(lastToken);
+        }
+
+        for ( OperationResponse response : page.getRecords() )
         {
-            byte[] bytes = Base64.getDecoder().decode( txResponse.getEnvelopeXdr() );
+            savePagingToken( response.getPagingToken() );
+
+            // The payments stream includes both sent and received payments. We only
+            // want to process received payments here.
+            if ( response instanceof PaymentOperationResponse )
+            {
+                if ( !( ( PaymentOperationResponse ) response ).getFrom().getAccountId().equalsIgnoreCase ( pair.getAccountId() ) )
+                {
+                    String amount = ( ( PaymentOperationResponse ) response ).getAmount();
+                    String asset = Resolve.assetName( ( ( PaymentOperationResponse ) response ).getAsset() );
+                    String time = Format.time ( response.getCreatedAt() );
+
+                    transactions.add( new Transactions(
+                            asset, amount, time, false) );
+                }
+                // now get the sent payments
+                else {
+                    String amount = Format.sentPayment ( ( ( PaymentOperationResponse ) response ).getAmount() );
+                    String asset = Resolve.assetName( ( ( PaymentOperationResponse ) response ).getAsset() );
+                    String time = Format.time ( response.getCreatedAt() );
+
+                    transactions.add( new Transactions(
+                            asset, amount, time, true) );
+                }
+
+            }
+
+        }
+        return transactions;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public ObservableList<Transactions> getTransactionsFull ( boolean isMainNet ) throws IOException {
+        Server server = Connections.getServer(isMainNet);
+        ObservableList<Transactions> transactions = FXCollections.observableArrayList();
+        ArrayList<TransactionResponse> transactionResponses = server.transactions().forAccount(pair).limit(100).execute().getRecords();
+
+        lunHelpLogger.debug("{}", transactionResponses.size());
+
+        for (TransactionResponse response : transactionResponses) {
+            byte[] bytes = Base64.getDecoder().decode(response.getEnvelopeXdr());
             XdrDataInputStream in = new XdrDataInputStream(new ByteArrayInputStream(bytes));
             Transaction tx = TransactionEnvelope.decode(in).getTx();
 
-            *//* a tx can have multiple operations, so iterate through (potentially) all of them *//*
-            for ( int i = 0; i < tx.getOperations().length; i++ )
-            {
-                if ( tx.getOperations()[i].getBody().getDiscriminant() == OperationType.PAYMENT )
-                {
-                    String amount = tx.getOperations()[i].getBody().getPaymentOp().getAmount().getInt64().toString();
-                    String coin;
-                    if ( tx.getOperations()[i].getBody().getPaymentOp().getAsset().getDiscriminant() == AssetType.ASSET_TYPE_NATIVE )
-                        coin = "XLM";
-                    else
-                        coin = String.valueOf(tx.getOperations()[i].getBody().getPaymentOp().getAsset().getAlphaNum12().getAssetCode());
-                    String time = "?";
-                    String memo = tx.getMemo().getText();
+            /* a tx can have multiple operations, so iterate through (potentially) all of them */
+            for (int i = 0; i < tx.getOperations().length; i++) {
+                if (tx.getOperations()[i].getBody().getDiscriminant() == OperationType.PAYMENT) {
+                    org.stellar.sdk.xdr.Asset asset = tx.getOperations()[i].getBody().getPaymentOp().getAsset();
 
-                    transactions.add( new Transactions( coin, Format.parseAmountString( amount ), time, memo ) );
+                    String amount = Format.parseAmountString(tx.getOperations()[i].getBody().getPaymentOp().getAmount().getInt64().toString());
+                    String coin = Resolve.assetName(asset);
+                    String memo = tx.getMemo().getText();
+                    KeyPair srcKey = Resolve.getKeyPairFromAccountIdStr(transactionResponses.get(0).getSourceAccount().getAccountId()); // the user's account
+                    KeyPair destKey = Resolve.getKeyPairFromAccountId(tx.getOperations()[i].getBody().getPaymentOp().getDestination());
+                    String addr;
+                    boolean isPayment;
+
+                    //lunHelpLogger.debug( response.getEnvelopeXdr() );
+
+                    /* determine if we sent or recieved this payment */
+                    if (!pair.getAccountId().equalsIgnoreCase(srcKey.getAccountId()) && pair.getAccountId().equalsIgnoreCase(destKey.getAccountId())) {
+                        if (!srcKey.getAccountId().equalsIgnoreCase(pair.getAccountId())) {
+                            //this means the current account is RECEIVING the payment
+                            isPayment = false;
+                            addr = srcKey.getAccountId();
+                            lunHelpLogger.debug("Recieved from\t{}", srcKey.getAccountId());
+
+                        } else {
+                            isPayment = true;
+                            addr = destKey.getAccountId();
+                            amount = Format.sentPayment(amount);
+                            lunHelpLogger.debug("Sent to\t{}", destKey.getAccountId());
+
+                        }
+                    } else {
+                        isPayment = false;
+                        addr = "Sent to self";
+                        lunHelpLogger.debug("Sent to self: My Account {}\tTo/From {}", pair.getAccountId(), destKey.getAccountId());
+
+                    }
+
+                    lunHelpLogger.debug("{}\t{}", coin, Format.parseAmountString(amount));
+                    transactions.add(new Transactions(
+                            coin
+                            , amount
+                            , Format.time(response.getCreatedAt())
+                            , memo
+                            , addr
+                            , isPayment));
                 }
             }
         }
@@ -213,87 +286,56 @@ public class AccountDetails
     }
 
     @SuppressWarnings("Duplicates")
-    public void getPageTransactions ( boolean isMainNet ) throws IOException, URISyntaxException {
+    public ObservableList<Transactions> getAllPaymentsNM ( boolean isMainNet ) throws IOException
+    {
         Server server = Connections.getServer ( isMainNet );
-
+        PaymentsRequestBuilder paymentsRequest = server.payments().forAccount( pair );
         ObservableList<Transactions> transactions = FXCollections.observableArrayList();
-        Page<TransactionResponse> page = server.transactions().forAccount( pair ).execute();
-        boolean hasNext = true;
+        Page<OperationResponse> page = paymentsRequest.execute();
 
-        while ( hasNext )
-        {
-            if ( page.getRecords().size() == 0 )
-            {
-                System.out.println("End of records");
-                break;
-            } else {
-                System.out.println("Records for account "+ page.getRecords().get(0).getSourceAccount().getAccountId() );
-                byte[] bytes = Base64.getDecoder().decode( page.getRecords().get(0).getEnvelopeXdr() );
-                XdrDataInputStream in = new XdrDataInputStream(new ByteArrayInputStream(bytes));
-                Transaction tx = TransactionEnvelope.decode(in).getTx();
-
-                *//* a tx can have multiple operations, so iterate through (potentially) all of them *//*
-                for ( int i = 0; i < tx.getOperations().length; i++ )
-                {
-                    if ( tx.getOperations()[i].getBody().getDiscriminant() == OperationType.PAYMENT )
-                    {
-                        String amount = tx.getOperations()[i].getBody().getPaymentOp().getAmount().getInt64().toString();
-                        String coin;
-                        if ( tx.getOperations()[i].getBody().getPaymentOp().getAsset().getDiscriminant() == AssetType.ASSET_TYPE_NATIVE )
-                            coin = "XLM";
-                        else
-                            coin = String.valueOf(tx.getOperations()[i].getBody().getPaymentOp().getAsset().getAlphaNum12().getAssetCode());
-                        String time = "?";
-                        String memo = tx.getMemo().getText();
-
-                        transactions.add( new Transactions( coin, Format.parseAmountString( amount ), time, memo ) );
-
-                        StringBuilder builder = new StringBuilder()
-                                .append("Coin ").append(coin)
-                                .append("\nAmount: ").append(amount)
-                                .append("\n");
-                        System.out.println(builder.toString());
-                    }
-                }
-            }
+        String lastToken = loadLastPagingToken();
+        if (lastToken != null) {
+            paymentsRequest.cursor(lastToken);
         }
-    }*/
 
-    @SuppressWarnings("Duplicates")
-    public ObservableList<Transactions> getTransactions ( boolean isMainNet ) throws IOException {
-        Server server = Connections.getServer ( isMainNet );
-        ObservableList<Transactions> transactions = FXCollections.observableArrayList();
-        ArrayList<TransactionResponse> transactionResponses = server.transactions().forAccount( pair ).limit(100).execute().getRecords();
-
-        lunHelpLogger.debug("{}", transactionResponses.size() );
-
-        for ( TransactionResponse response : transactionResponses )
+        for ( OperationResponse response : page.getRecords() )
         {
-            byte[] bytes = Base64.getDecoder().decode( response.getEnvelopeXdr() );
-            XdrDataInputStream in = new XdrDataInputStream(new ByteArrayInputStream(bytes));
-            Transaction tx = TransactionEnvelope.decode(in).getTx();
+            savePagingToken( response.getPagingToken() );
 
-            /* a tx can have multiple operations, so iterate through (potentially) all of them */
-            for ( int i = 0; i < tx.getOperations().length; i++ )
+            // The payments stream includes both sent and received payments. We only
+            // want to process received payments here.
+            if ( response instanceof PaymentOperationResponse )
             {
-                if ( tx.getOperations()[i].getBody().getDiscriminant() == OperationType.PAYMENT )
+                if ( !( ( PaymentOperationResponse ) response ).getFrom().getAccountId().equalsIgnoreCase ( pair.getAccountId() ) )
                 {
-                    org.stellar.sdk.xdr.Asset asset = tx.getOperations()[i].getBody().getPaymentOp().getAsset();
+                    String amount = ( ( PaymentOperationResponse ) response ).getAmount();
+                    String asset = Resolve.assetName( ( ( PaymentOperationResponse ) response ).getAsset() );
+                    String from = ( ( PaymentOperationResponse) response ).getFrom().getAccountId();
+                    String time = Format.time ( response.getCreatedAt() );
 
-                    String amount = tx.getOperations()[i].getBody().getPaymentOp().getAmount().getInt64().toString();
-                    String coin = Resolve.assetName ( asset );
-                    String memo = tx.getMemo().getText();
-
-                    lunHelpLogger.debug( "{}\t{}", coin,  Format.parseAmountString( amount ));
                     transactions.add( new Transactions(
-                              coin
-                            , Format.parseAmountString( amount )
-                            , Format.time ( response.getCreatedAt() )
-                            , memo ) );
+                            asset, amount, time, from, false ) );
+                } else {
+                    String amount = Format.sentPayment ( ( ( PaymentOperationResponse ) response ).getAmount() );
+                    String asset = Resolve.assetName( ( ( PaymentOperationResponse ) response ).getAsset() );
+                    String from = ( ( PaymentOperationResponse) response ).getFrom().getAccountId();
+                    String time = Format.time ( response.getCreatedAt() );
+
+                    transactions.add( new Transactions(
+                            asset, amount, time, from, true ) );
                 }
             }
         }
         return transactions;
+    }
+
+    private static void savePagingToken(String pagingToken) {
+        // TODO Auto-generated method stub
+        myToken = pagingToken;
+    }
+    private static String loadLastPagingToken() {
+        // TODO Auto-generated method stub
+        return myToken;
     }
 
     public KeyPair getPair() {
