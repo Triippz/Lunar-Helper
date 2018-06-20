@@ -30,8 +30,9 @@ import io.triptrader.models.Payment;
 import io.triptrader.models.Validate;
 import io.triptrader.models.assets.Transactions;
 import io.triptrader.utilities.Alerts;
+import io.triptrader.utilities.ColumnRowFormatter;
 import io.triptrader.utilities.Resolve;
-import javafx.collections.ObservableList;
+import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -44,6 +45,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stellar.sdk.KeyPair;
@@ -52,7 +54,6 @@ import org.stellar.sdk.responses.SubmitTransactionResponse;
 import org.stellar.sdk.xdr.MemoType;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Objects;
 import java.util.Optional;
@@ -203,6 +204,9 @@ public class MainMenuController implements Initializable
         getTransactionTable().setItems( accountDetails.getTransactions ( isMainNet ) );
         getTransactionTable().getColumns().clear();
         getTransactionTable().getColumns().setAll ( getTxAssetColumn(), getTxAmountColumn(), getTxTimeColumn() );
+
+        ColumnRowFormatter.txRowTextHighlighter ( getTransactionTable(), getTxAmountColumn() );
+
     }
 
     @SuppressWarnings("unchecked")
@@ -221,7 +225,7 @@ public class MainMenuController implements Initializable
         getTxPaneTable().getColumns().setAll ( getTxAssetColumn(), getTxAmountColumn(), getTxTimeColumn(), getTxPaneToFromCol() );
 
         // set the colors depending on payment type
-
+        ColumnRowFormatter.txRowTextHighlighter ( getTxPaneTable(), getTxPaneAmountCol() );
     }
 
     private void showNewAccount ( )
@@ -265,7 +269,7 @@ public class MainMenuController implements Initializable
 
     private void setNetLabel ( )
     {
-        getWhichNetLabel().setText( isMainNet.toString() );
+        getWhichNetLabel().setText( isMainNet.toString().toUpperCase() );
         if ( isMainNet )
             getWhichNetLabel().setTextFill (Color.GREEN);
         else
