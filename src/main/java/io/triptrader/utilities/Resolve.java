@@ -24,7 +24,6 @@
 
 package io.triptrader.utilities;
 
-import com.google.common.io.BaseEncoding;
 import io.triptrader.models.assets.StellarAsset;
 import org.json.JSONObject;
 import org.stellar.sdk.*;
@@ -33,13 +32,11 @@ import org.stellar.sdk.xdr.Asset;
 import org.stellar.sdk.xdr.Memo;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Base64;
 
 public class Resolve
 {
@@ -98,13 +95,13 @@ public class Resolve
 
     private static double checkAssetPrice(String assetCode) throws IOException
     {
-        String jsonString = getJSONFromCC ( BASE_URL + "page/" + assetCode );
+        String jsonString = getJSON ( BASE_URL + "page/" + assetCode );
 
         JSONObject jsonObject = new JSONObject ( jsonString );
         return jsonObject.getDouble("price_usd" );
     }
 
-    private static String getJSONFromCC(String requestUrl) throws IOException
+    public static String getJSON(String requestUrl) throws IOException
     {
 
         StringBuilder jsonString = new StringBuilder();

@@ -80,4 +80,6 @@ public class Format
     {
         return new StringBuilder( amount ).insert(0, "-").toString();
     }
+
+    public static String parseCursorUrl ( String url, String cursor ) { return String.format ( url, cursor ); }
 }

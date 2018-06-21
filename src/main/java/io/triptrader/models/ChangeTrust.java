@@ -24,5 +24,95 @@
 
 package io.triptrader.models;
 
-public class ChangeTrust {
+import io.triptrader.models.assets.Assets;
+import io.triptrader.utilities.Connections;
+import io.triptrader.utilities.HorizonQuery;
+import io.triptrader.utilities.Resolve;
+import okhttp3.OkHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.stellar.sdk.Asset;
+import org.stellar.sdk.ChangeTrustOperation;
+import org.stellar.sdk.KeyPair;
+import org.stellar.sdk.Server;
+import org.stellar.sdk.responses.AssetResponse;
+import org.stellar.sdk.responses.Page;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
+
+public class ChangeTrust
+{
+    private KeyPair pair;
+    private final static Logger lunHelpLogger = LoggerFactory.getLogger("lh_logger");
+
+    public ChangeTrust ( KeyPair pair ) { this.pair = pair; }
+
+    public void changeTrust ( boolean isMainNet, Asset asset, String limit ) throws IOException {
+        Server server = Connections.getServer ( isMainNet );
+        Page<AssetResponse> page = server.assets().execute();
+
+
+        for ( AssetResponse response : page.getRecords() )
+        {
+            //response.getAsset().
+        }
+
+        ChangeTrustOperation operation = new ChangeTrustOperation.Builder(asset, limit)
+                .setSourceAccount( pair )
+                .build();
+    }
+
+    /**
+     * Used to get all assets and their issuer
+     * @param isMainNet to determine which horizon server to hit
+     * @return Map k=issuer v=assetcode of all assets
+     */
+    public Map<String,String> getAllAssets ( boolean isMainNet )  {
+        return HorizonQuery.getAllAssets ( isMainNet );
+    }
+
+    /**
+     * Returns an object of type Asset given the assetcode
+     * @param isMainNet to determine which horizon server to hit
+     * @param assetCode short-hand name of the asset
+     * @return Asset Object
+     * @throws Exception thrown if there is more than one asset with the given asset code
+     */
+    public Assets getAsset ( boolean isMainNet, String assetCode ) throws Exception {
+        return HorizonQuery.getAssetInfo ( isMainNet, assetCode );
+    }
+
+    /**
+     * Used when there are multiple assets of the same name but with different issuers
+     * @param isMainNet to determine which horizon server to hit
+     * @param assetCode short-hand name of the asset
+     * @return an ArrayList of all applicable assets
+     */
+    public ArrayList<Assets> getAssets ( boolean isMainNet, String assetCode ) {
+        return HorizonQuery.getAssetInfoArr ( isMainNet, assetCode );
+    }
+
+    /**
+     * Get all assets of the given asset code,
+     * @param isMainNet to determine which horizon server to hit
+     * @param assetCode short-hand name of the asset
+     * @param issuer the issuer's key
+     * @return Map k=issuer_code v=Asset Object
+     */
+    public Map<String,Assets> getAssetByIssuer ( boolean isMainNet, String assetCode, String issuer ) {
+        return HorizonQuery.getAssetInfo ( isMainNet, assetCode, issuer );
+    }
+
+    /**
+     * Used to get all assets which are issued by the given issuer
+     * @param isMainNet to determine which horizon server to hit
+     * @param issuer the issuer's key
+     * @return ArrayList of Asset Objects
+     */
+    public ArrayList<Assets> getIssuersAssets ( boolean isMainNet, String issuer ) {
+        return HorizonQuery.getIssuerAssets ( isMainNet, issuer);
+    }
+
 }

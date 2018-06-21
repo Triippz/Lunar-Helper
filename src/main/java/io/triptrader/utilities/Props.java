@@ -34,13 +34,17 @@ public class Props
     public static final String LUNAR_HELPER_PROPS = "config/lunarHelper.properties";
     public static final String TEST_NET = "stellar.org.testnet";
     public static final String MAIN_NET = "stellar.org.mainnet";
+    public static final String ALL_ASSETS = "stellar.org.allassets";
+    public static final String ASSET_C = "stellar.org.asset.code";
+    public static final String ASSET_I = "stellar.org.asset.issuer";
+    public static final String ASSET_CI = "stellar.org.asset.code&issuer";
 
     public static String getProperty ( String propertiesFile, String propertyKey )
     {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         Properties prop = new Properties();
         InputStream in = loader.getResourceAsStream( propertiesFile );
-        String value = null;
+        String value;
 
         try {
             prop.load ( in );

@@ -24,15 +24,10 @@
 
 package io.triptrader.controllers;
 
-import io.triptrader.models.AccountDetails;
-import io.triptrader.models.CreateAccount;
-import io.triptrader.models.Payment;
-import io.triptrader.models.Validate;
-import io.triptrader.models.assets.Transactions;
+import io.triptrader.models.*;
 import io.triptrader.utilities.Alerts;
 import io.triptrader.utilities.ColumnRowFormatter;
 import io.triptrader.utilities.Resolve;
-import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -45,7 +40,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stellar.sdk.KeyPair;
@@ -74,6 +68,7 @@ public class MainMenuController implements Initializable
     private CreateAccount createAccount;
     private Payment payment;
     private AccountDetails accountDetails;
+    private ChangeTrust changeTrust;
 
     /******** PAGE INITS ******/
     @Override
@@ -497,6 +492,15 @@ public class MainMenuController implements Initializable
     public void exitMenuClick ( )
     {
         System.exit(0);
+    }
+
+    @FXML
+    public void changeTrustClick ( )
+    {
+        if ( changeTrust == null )
+            changeTrust = new ChangeTrust( userKey );
+
+
     }
 
 
