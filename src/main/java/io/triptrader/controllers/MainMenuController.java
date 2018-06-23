@@ -25,9 +25,12 @@
 package io.triptrader.controllers;
 
 import io.triptrader.models.*;
+import io.triptrader.models.assets.Assets;
 import io.triptrader.utilities.Alerts;
 import io.triptrader.utilities.ColumnRowFormatter;
 import io.triptrader.utilities.Resolve;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -49,6 +52,7 @@ import org.stellar.sdk.xdr.MemoType;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -90,6 +94,41 @@ public class MainMenuController implements Initializable
         getChangeTrustPane().setVisible(false);
     }
 
+    private void clearChangeTrustPanes ( )
+    {
+        getCtSelectTrustPane().setVisible(false);
+        getCtMainPane().setVisible(false);
+    }
+
+    private void initChangeTrust ( )
+    {
+        clearAllPanes();
+        clearChangeTrustPanes();
+        getChangeTrustPane().setVisible(true);
+        getCtMainPane().setVisible(true);
+    }
+
+    private void initCTAssetSearch ( )
+    {
+        getCtMainPane().setVisible(false);
+        getCtSelectTrustPane().setVisible(true);
+
+        if ( getCtComboBox().getItems().isEmpty() )
+        {
+            ObservableList<String> searchTypes = FXCollections.observableArrayList();
+            searchTypes.add("All Assets");
+            searchTypes.add("By Asset");
+            searchTypes.add("By Asset and Issuer");
+            searchTypes.add("All Issuer's Assets");
+
+            getCtComboBox().setItems ( searchTypes );
+        }
+    }
+
+    private void initCTKnowAsset ( )
+    {
+        getCtMainPane().setVisible(false);
+    }
 
     private void initAccountDetails ( )
     {
@@ -204,10 +243,18 @@ public class MainMenuController implements Initializable
 
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "Duplicates"})
     private void initFullTransactionsTable ( ) throws IOException
     {
-        if ( accountDetails == null )
+        if ( accountDetails == null && userKey == null)
+        {
+            Alert alert = new Alert(Alert.AlertType.WARNING );
+            alert.setHeaderText("No Active Account");
+            alert.setContentText("Need an active account to view transactions. Would you like to use one now?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if ( result.get() == ButtonType.OK)
+                initDefaultPane();
+        } else if ( accountDetails == null && userKey != null )
             accountDetails = new AccountDetails ( userKey );
 
         getTxPaneAssetCol().setCellValueFactory ( new PropertyValueFactory<>("assetName") );
@@ -215,12 +262,18 @@ public class MainMenuController implements Initializable
         getTxPaneDateCol().setCellValueFactory ( new PropertyValueFactory<>("date") );
         getTxPaneToFromCol().setCellValueFactory ( new PropertyValueFactory<>("toFrom") );
 
-        getTxPaneTable().setItems( accountDetails.getAllPaymentsNM ( isMainNet ) );
-        getTxPaneTable().getColumns().clear();
-        getTxPaneTable().getColumns().setAll ( getTxAssetColumn(), getTxAmountColumn(), getTxTimeColumn(), getTxPaneToFromCol() );
+        try {
+            getTxPaneTable().setItems( accountDetails.getAllPaymentsNM ( isMainNet ) );
+            getTxPaneTable().getColumns().clear();
+            getTxPaneTable().getColumns().setAll ( getTxAssetColumn(), getTxAmountColumn(), getTxTimeColumn(), getTxPaneToFromCol() );
 
-        // set the colors depending on payment type
-        ColumnRowFormatter.txRowTextHighlighter ( getTxPaneTable(), getTxPaneAmountCol() );
+            // set the colors depending on payment type
+            ColumnRowFormatter.txRowTextHighlighter ( getTxPaneTable(), getTxPaneAmountCol() );
+        } catch ( NullPointerException e )
+        {
+            lunHelpLogger.warn("No active account");
+        }
+
     }
 
     private void showNewAccount ( )
@@ -283,6 +336,69 @@ public class MainMenuController implements Initializable
         getPaymentSendButton().setVisible(true);
     }
 
+    private void searchForAsset ( )
+    {
+        /* we need to have an active account to change a trust line */
+        if ( userKey == null )
+        {
+            Alert alert = new Alert(Alert.AlertType.WARNING );
+            alert.setHeaderText("No Active Account");
+            alert.setContentText("Need an active account to change a trust line. Would you like to use one now?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if ( result.get() == ButtonType.OK)
+                initDefaultPane();
+        } else if ( changeTrust == null && userKey != null )
+            changeTrust = new ChangeTrust ( userKey );
+
+        /* now lets see what the users checkbox selection was */
+        switch ( ( String ) getCtComboBox().getValue() )
+        {
+            case "All Assets":
+                StringBuilder response = new StringBuilder();
+                changeTrust.getAllAssets( isMainNet ).forEach( ( k, v ) -> {
+                     response
+                            .append("Asset: ").append(v)
+                            .append("\t\tIssuer: ").append(k).append("\n");
+
+                });
+                getCtAssetSearchReponseTA().setText ( response.toString() );
+                break;
+            case "By Asset":
+                getCtAssetSearchReponseTA().setText ( changeTrust.getAssetResponse (
+                        isMainNet,
+                        getCtAssetSearchAssetCodeTF(),
+                        getCtAssetSearchIssuerTF() ) );
+                break;
+            case "By Asset and Issuer":
+                break;
+            case "All Issuer's Assets":
+                break;
+            default:
+                getCtAssetSearchReponseTA().setText("Please select a search type");
+                break;
+
+        }
+
+/*        String assetCode = getCtAssetSearchAssetCodeTF().getText();
+        String issuer = getCtAssetSearchIssuerTF().getText();
+        Assets response = null;
+
+        if ( !assetCode.equalsIgnoreCase("") || !issuer.equalsIgnoreCase("") )
+        {
+            assetCode = getCtAssetSearchAssetCodeTF().getText();
+            issuer = getCtAssetSearchIssuerTF().getText();
+            response = changeTrust.getAssetByIssuer ( isMainNet, assetCode, issuer );
+
+            if ( response == null )
+                getCtAssetSearchReponseTA().setText("Unable to find asset");
+            else
+                getCtAssetSearchReponseTA().setText ( response.toString() );
+
+        } else { getCtAssetSearchReponseTA().setText("Please fill out all fields");}*/
+
+
+
+    }
 
     /********** SCENE ACTIONS ************/
     @FXML
@@ -479,6 +595,30 @@ public class MainMenuController implements Initializable
         initAccountDetails();
     }
 
+    @FXML
+    public void changeTrustClick ( )
+    {
+        if ( changeTrust == null )
+            changeTrust = new ChangeTrust( userKey );
+
+        initChangeTrust();
+    }
+
+    @FXML
+    public void knowTheAssetClick ( ) { initCTKnowAsset(); }
+
+    @FXML
+    public void searchForAssetClick ( ) { initCTAssetSearch(); }
+
+    @FXML
+    public void ctAssetSearchClick ( ) {
+        searchForAsset ( );
+    }
+
+    @FXML
+    public void ctUseAssetSearchClick ( ) { }
+
+
     /*********************************************
      *                  MENU ACTIONS
      *********************************************/
@@ -494,14 +634,6 @@ public class MainMenuController implements Initializable
         System.exit(0);
     }
 
-    @FXML
-    public void changeTrustClick ( )
-    {
-        if ( changeTrust == null )
-            changeTrust = new ChangeTrust( userKey );
-
-
-    }
 
 
     /* SCENE CONTROLS */
@@ -637,6 +769,22 @@ public class MainMenuController implements Initializable
     private TableColumn txPaneToFromCol;
     @FXML
     private Pane viewTransactionsPane;
+    @FXML
+    private Button searchForAssetBut;
+    @FXML
+    private Button knowTheAssetBut;
+    @FXML
+    private Pane ctMainPane;
+    @FXML
+    private Pane ctSelectTrustPane;
+    @FXML
+    private TextField ctAssetSearchAssetCodeTF;
+    @FXML
+    private TextField ctAssetSearchIssuerTF;
+    @FXML
+    private TextArea ctAssetSearchReponseTA;
+    @FXML
+    private ComboBox ctComboBox;
 
     public AnchorPane getMainAncPane() {
         return mainAncPane;
@@ -1213,5 +1361,41 @@ public class MainMenuController implements Initializable
 
     private Pane getViewTransactionsPane() {
         return viewTransactionsPane;
+    }
+
+    public ChangeTrust getChangeTrust() {
+        return changeTrust;
+    }
+
+    public Button getSearchForAssetBut() {
+        return searchForAssetBut;
+    }
+
+    public Button getKnowTheAssetBut() {
+        return knowTheAssetBut;
+    }
+
+    public Pane getCtMainPane() {
+        return ctMainPane;
+    }
+
+    public Pane getCtSelectTrustPane() {
+        return ctSelectTrustPane;
+    }
+
+    public TextField getCtAssetSearchAssetCodeTF() {
+        return ctAssetSearchAssetCodeTF;
+    }
+
+    public TextField getCtAssetSearchIssuerTF() {
+        return ctAssetSearchIssuerTF;
+    }
+
+    public TextArea getCtAssetSearchReponseTA() {
+        return ctAssetSearchReponseTA;
+    }
+
+    public ComboBox getCtComboBox() {
+        return ctComboBox;
     }
 }

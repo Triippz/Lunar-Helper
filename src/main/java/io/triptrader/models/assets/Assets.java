@@ -103,15 +103,14 @@ public class Assets
 
     @Override
     public String toString() {
-        return "Assets{" +
-                "assetCode='" + assetCode + '\'' +
-                ", totalSupply='" + totalSupply + '\'' +
-                ", assetType='" + assetType + '\'' +
-                ", pagingToken='" + pagingToken + '\'' +
-                ", issuer='" + issuer + '\'' +
-                ", numAccounts=" + numAccounts +
-                ", authRequired=" + authRequired +
-                ", authRevocable=" + authRevocable +
-                '}';
+        return
+                "Asset Code= " + assetCode + '\n' +
+                "Total Supply= " + totalSupply + '\n' +
+                "Asset Type= " + assetType + '\n' +
+                "Paging Token= " + pagingToken + '\n' +
+                "Issuer= " + issuer + '\n' +
+                "Number of Accounts= " + numAccounts + "\n" +
+                "Authorization Required= " + authRequired + "\n" +
+                "Authorization Revocable= " + authRevocable + "\n" ;
     }
 }

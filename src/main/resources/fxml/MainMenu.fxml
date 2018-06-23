@@ -25,14 +25,14 @@
         <items>
           <AnchorPane fx:id="leftAncPane" minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0" style="-fx-background-color: black;">
                <children>
-                  <Button fx:id="createAccountBut" layoutX="1.0" layoutY="38.0" mnemonicParsing="false" onMouseClicked="#createAccount" prefHeight="29.0" prefWidth="207.0" text="Create Account" />
-                  <Button fx:id="sendPaymentBut" layoutX="1.0" layoutY="67.0" mnemonicParsing="false" onMouseClicked="#sendPaymentMenuClick" prefHeight="27.0" prefWidth="207.0" text="Send Payment" />
-                  <Button fx:id="changeTrustBut" layoutX="1.0" layoutY="121.0" mnemonicParsing="false" onMouseClicked="#changeTrustClick" prefHeight="27.0" prefWidth="207.0" text="Change Trust" />
-                  <Button fx:id="trustLinesButton" layoutX="1.0" layoutY="148.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Trust Lines" />
-                  <Button fx:id="accountMergeBut" layoutX="1.0" layoutY="175.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Account Merge" />
-                  <Button fx:id="createAssetBut" layoutX="1.0" layoutY="202.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Create Asset" />
-                  <Button fx:id="viewTransactionsButton" layoutX="1.0" layoutY="94.0" mnemonicParsing="false" onMouseClicked="#viewTransactionsClick" prefHeight="27.0" prefWidth="207.0" text="View Transactions" />
-                  <Button fx:id="accountDetailsBut" layoutX="1.0" layoutY="9.0" mnemonicParsing="false" onMouseClicked="#accountDetailsClick" prefHeight="29.0" prefWidth="207.0" text="Account Details" />
+                  <Button fx:id="createAccountBut" layoutX="1.0" layoutY="28.0" mnemonicParsing="false" onMouseClicked="#createAccount" prefHeight="29.0" prefWidth="207.0" text="Create Account" />
+                  <Button fx:id="sendPaymentBut" layoutX="1.0" layoutY="57.0" mnemonicParsing="false" onMouseClicked="#sendPaymentMenuClick" prefHeight="27.0" prefWidth="207.0" text="Send Payment" />
+                  <Button fx:id="changeTrustBut" layoutX="1.0" layoutY="111.0" mnemonicParsing="false" onMouseClicked="#changeTrustClick" prefHeight="27.0" prefWidth="207.0" text="Change Trust" />
+                  <Button fx:id="trustLinesButton" layoutX="1.0" layoutY="138.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Trust Lines" />
+                  <Button fx:id="accountMergeBut" layoutX="1.0" layoutY="165.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Account Merge" />
+                  <Button fx:id="createAssetBut" layoutY="192.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="207.0" text="Create Asset" />
+                  <Button fx:id="viewTransactionsButton" layoutX="1.0" layoutY="84.0" mnemonicParsing="false" onMouseClicked="#viewTransactionsClick" prefHeight="27.0" prefWidth="207.0" text="View Transactions" />
+                  <Button fx:id="accountDetailsBut" layoutX="1.0" layoutY="-1.0" mnemonicParsing="false" onMouseClicked="#accountDetailsClick" prefHeight="29.0" prefWidth="207.0" text="Account Details" />
                </children>
             </AnchorPane>
           <AnchorPane fx:id="rightAncPane" minHeight="0.0" minWidth="0.0" prefHeight="627.0" prefWidth="758.0">
@@ -108,7 +108,96 @@
                            </effect>
                         </ComboBox>
                      </children></Pane>
-                  <Pane fx:id="changeTrustPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                  <Pane fx:id="changeTrustPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <Pane fx:id="ctSelectTrustPane" layoutX="14.0" layoutY="54.0" prefHeight="570.0" prefWidth="853.0">
+                           <children>
+                              <Label layoutX="14.0" layoutY="43.0" text="Asset Code:">
+                                 <font>
+                                    <Font size="15.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="ctAssetSearchAssetCodeTF" layoutX="159.0" layoutY="36.0" prefHeight="27.0" prefWidth="148.0" promptText="ex. (XLM)">
+                                 <font>
+                                    <Font size="17.0" />
+                                 </font>
+                              </TextField>
+                              <Label layoutX="14.0" layoutY="105.0" text="Issuer Address">
+                                 <font>
+                                    <Font size="16.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="ctAssetSearchIssuerTF" layoutX="159.0" layoutY="99.0" prefHeight="32.0" prefWidth="671.0">
+                                 <font>
+                                    <Font size="16.0" />
+                                 </font>
+                              </TextField>
+                              <TextArea fx:id="ctAssetSearchReponseTA" layoutX="14.0" layoutY="241.0" prefHeight="281.0" prefWidth="823.0" />
+                              <Button fx:id="ctAssetSearchBut" layoutX="363.0" layoutY="529.0" mnemonicParsing="false" onMouseClicked="#ctAssetSearchClick" prefHeight="27.0" prefWidth="125.0" text="Search">
+                                 <font>
+                                    <Font size="17.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="ctUseAssetSearchBut" layoutX="364.0" layoutY="529.0" mnemonicParsing="false" onMouseClicked="#ctUseAssetSearchClick" prefHeight="27.0" prefWidth="125.0" text="Use" visible="false">
+                                 <font>
+                                    <Font size="17.0" />
+                                 </font>
+                              </Button>
+                              <ComboBox fx:id="ctComboBox" layoutX="190.0" layoutY="171.0" prefHeight="27.0" prefWidth="471.0" promptText="Search Type" />
+                           </children>
+                        </Pane>
+                        <Label layoutX="380.0" layoutY="20.0" text="Change Trust" underline="true">
+                           <font>
+                              <Font name="System Bold" size="23.0" />
+                           </font>
+                        </Label>
+                        <Pane fx:id="ctMainPane" layoutX="14.0" layoutY="54.0" prefHeight="570.0" prefWidth="853.0" visible="false">
+                           <children>
+                              <Label alignment="CENTER" layoutX="14.0" layoutY="29.0" prefHeight="18.0" prefWidth="823.0" text="To change and already created Trust Line, you must select the appropriate asset.">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Label>
+                              <Label alignment="CENTER" layoutX="30.0" layoutY="55.0" prefHeight="18.0" prefWidth="823.0" text="You change the asset based off of whom the asset belongs to. (Issuer)">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Label>
+                              <Label alignment="CENTER" layoutX="30.0" layoutY="81.0" prefHeight="18.0" prefWidth="823.0" text="This means there can many assets of the same name with different issuers.">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Label>
+                              <Label alignment="CENTER" layoutX="15.0" layoutY="107.0" prefHeight="18.0" prefWidth="823.0" text="These assets can all have different properties.">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Label>
+                              <Label alignment="CENTER" layoutX="15.0" layoutY="220.0" prefHeight="18.0" prefWidth="823.0" text="If you are unaware of either:" textFill="#f50505">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Label>
+                              <Label alignment="CENTER" layoutX="14.0" layoutY="246.0" prefHeight="18.0" prefWidth="823.0" text="1. The asset code" textFill="#fc0101">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Label>
+                              <Label alignment="CENTER" layoutX="15.0" layoutY="272.0" prefHeight="18.0" prefWidth="823.0" text="2. The asset issuer (key)" textFill="#fc0101">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Label>
+                              <Label alignment="CENTER" layoutX="14.0" layoutY="364.0" prefHeight="18.0" prefWidth="823.0" text="Please select the appropriate option">
+                                 <font>
+                                    <Font size="20.0" />
+                                 </font>
+                              </Label>
+                              <Button fx:id="searchForAssetBut" layoutX="160.0" layoutY="440.0" mnemonicParsing="false" onMouseClicked="#searchForAssetClick" prefHeight="69.0" prefWidth="207.0" text="Search for Asset/Issuer" />
+                              <Button fx:id="knowTheAssetBut" layoutX="466.0" layoutY="440.0" mnemonicParsing="false" onMouseClicked="#knowTheAssetClick" prefHeight="69.0" prefWidth="207.0" text="I know the Asset/Issuer" />
+                           </children>
+                        </Pane>
+                     </children></Pane>
                   <Pane fx:id="trustLinesPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                   <Pane fx:id="accountMergePane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                   <Pane fx:id="createAssetPane" prefHeight="627.0" prefWidth="711.0" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />

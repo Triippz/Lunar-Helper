@@ -27,8 +27,7 @@ package io.triptrader.models;
 import io.triptrader.models.assets.Assets;
 import io.triptrader.utilities.Connections;
 import io.triptrader.utilities.HorizonQuery;
-import io.triptrader.utilities.Resolve;
-import okhttp3.OkHttpClient;
+import javafx.scene.control.TextField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stellar.sdk.Asset;
@@ -40,7 +39,7 @@ import org.stellar.sdk.responses.Page;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.TreeMap;
 
 public class ChangeTrust
 {
@@ -69,7 +68,7 @@ public class ChangeTrust
      * @param isMainNet to determine which horizon server to hit
      * @return Map k=issuer v=assetcode of all assets
      */
-    public Map<String,String> getAllAssets ( boolean isMainNet )  {
+    public TreeMap<String,String> getAllAssets (boolean isMainNet )  {
         return HorizonQuery.getAllAssets ( isMainNet );
     }
 
@@ -99,9 +98,9 @@ public class ChangeTrust
      * @param isMainNet to determine which horizon server to hit
      * @param assetCode short-hand name of the asset
      * @param issuer the issuer's key
-     * @return Map k=issuer_code v=Asset Object
+     * @return Asset Object
      */
-    public Map<String,Assets> getAssetByIssuer ( boolean isMainNet, String assetCode, String issuer ) {
+    public Assets getAssetByIssuer ( boolean isMainNet, String assetCode, String issuer ) throws Exception {
         return HorizonQuery.getAssetInfo ( isMainNet, assetCode, issuer );
     }
 
@@ -115,4 +114,41 @@ public class ChangeTrust
         return HorizonQuery.getIssuerAssets ( isMainNet, issuer);
     }
 
+    public String getAssetResponse (boolean isMainNet, TextField asset, TextField issuer )
+    {
+        StringBuilder response = new StringBuilder();
+
+        if ( issuer.getText().isEmpty() )
+        {
+            if ( !asset.getText().equalsIgnoreCase("") )
+            {
+                try {
+                    response.append ( getAsset( isMainNet, asset.getText() ) );
+                } catch (Exception e) {
+                    if ( e.getMessage().equalsIgnoreCase("1") )
+                    {
+                        ArrayList<Assets> arrayList = getAssets ( isMainNet, asset.getText() );
+
+                        response.append ("MORE THAN ONE ISSUER FOR ASSET FOUND\n\n");
+                        arrayList.forEach( ( v ) -> {
+                            response.append( v.toString() );
+                            response.append( "\n\n" );
+                        });
+                    } else if ( e.getMessage().contains("not found.") )
+                    {
+                        response.append("No Asset found");
+                    }
+                }
+            } else {
+                response.append("Please enter an Asset");
+            }
+        } else {
+            try {
+                response.append ( getAssetByIssuer ( isMainNet, asset.getText(), issuer.getText() ) );
+            } catch (Exception e) {
+                response.append ( e.getMessage() );
+            }
+        }
+        return response.toString();
+    }
 }
