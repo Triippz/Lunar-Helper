@@ -79,7 +79,7 @@ public class ChangeTrust
      * @return Asset Object
      * @throws Exception thrown if there is more than one asset with the given asset code
      */
-    public Assets getAsset ( boolean isMainNet, String assetCode ) throws Exception {
+    private Assets getAsset ( boolean isMainNet, String assetCode ) throws Exception {
         return HorizonQuery.getAssetInfo ( isMainNet, assetCode );
     }
 
@@ -89,7 +89,7 @@ public class ChangeTrust
      * @param assetCode short-hand name of the asset
      * @return an ArrayList of all applicable assets
      */
-    public ArrayList<Assets> getAssets ( boolean isMainNet, String assetCode ) {
+    private ArrayList<Assets> getAssets ( boolean isMainNet, String assetCode ) {
         return HorizonQuery.getAssetInfoArr ( isMainNet, assetCode );
     }
 
@@ -100,7 +100,7 @@ public class ChangeTrust
      * @param issuer the issuer's key
      * @return Asset Object
      */
-    public Assets getAssetByIssuer ( boolean isMainNet, String assetCode, String issuer ) throws Exception {
+    private Assets getAssetByIssuer ( boolean isMainNet, String assetCode, String issuer ) throws Exception {
         return HorizonQuery.getAssetInfo ( isMainNet, assetCode, issuer );
     }
 
@@ -110,10 +110,18 @@ public class ChangeTrust
      * @param issuer the issuer's key
      * @return ArrayList of Asset Objects
      */
-    public ArrayList<Assets> getIssuersAssets ( boolean isMainNet, String issuer ) {
+    private ArrayList<Assets> getIssuersAssets ( boolean isMainNet, String issuer ) {
         return HorizonQuery.getIssuerAssets ( isMainNet, issuer);
     }
 
+    /**
+     * Returns various responses of assets and their issuers
+     * depending on what the user enters
+     * @param isMainNet to determine which horizon server to hit
+     * @param asset short-hand name of the asset
+     * @param issuer the issuer's key
+     * @return a String response (parsed) from Horizon
+     */
     public String getAssetResponse (boolean isMainNet, TextField asset, TextField issuer )
     {
         StringBuilder response = new StringBuilder();
@@ -148,6 +156,35 @@ public class ChangeTrust
             } catch (Exception e) {
                 response.append ( e.getMessage() );
             }
+        }
+        return response.toString();
+    }
+
+    /**
+     * Returns all assets which the issuer holds
+     * @param isMainNet to determine which horizon server to hit
+     * @param issuer the issuer's key
+     * @return String response from Horizon
+     */
+    public String getIssuerAssetsReponse ( boolean isMainNet, TextField issuer )
+    {
+        StringBuilder response = new StringBuilder();
+
+        if ( !issuer.getText().isEmpty() )
+        {
+            try {
+                ArrayList<Assets> assets = getIssuersAssets ( isMainNet, issuer.getText() );
+
+                assets.forEach( ( v ) -> {
+                    response.append ( v.toString() );
+                    response.append ( "\n\n" );
+                });
+            } catch ( Exception e )
+            {
+                lunHelpLogger.error( e.getMessage() );
+            }
+        } else {
+            response.append ( "Please enter an issuer" );
         }
         return response.toString();
     }

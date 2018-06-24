@@ -118,7 +118,6 @@ public class MainMenuController implements Initializable
             ObservableList<String> searchTypes = FXCollections.observableArrayList();
             searchTypes.add("All Assets");
             searchTypes.add("By Asset");
-            searchTypes.add("By Asset and Issuer");
             searchTypes.add("All Issuer's Assets");
 
             getCtComboBox().setItems ( searchTypes );
@@ -363,41 +362,24 @@ public class MainMenuController implements Initializable
                 });
                 getCtAssetSearchReponseTA().setText ( response.toString() );
                 break;
+
             case "By Asset":
                 getCtAssetSearchReponseTA().setText ( changeTrust.getAssetResponse (
                         isMainNet,
                         getCtAssetSearchAssetCodeTF(),
                         getCtAssetSearchIssuerTF() ) );
                 break;
-            case "By Asset and Issuer":
-                break;
+
             case "All Issuer's Assets":
+                getCtAssetSearchReponseTA().setText ( changeTrust.getIssuerAssetsReponse(
+                        isMainNet,
+                        getCtAssetSearchIssuerTF() ) );
                 break;
+
             default:
                 getCtAssetSearchReponseTA().setText("Please select a search type");
                 break;
-
         }
-
-/*        String assetCode = getCtAssetSearchAssetCodeTF().getText();
-        String issuer = getCtAssetSearchIssuerTF().getText();
-        Assets response = null;
-
-        if ( !assetCode.equalsIgnoreCase("") || !issuer.equalsIgnoreCase("") )
-        {
-            assetCode = getCtAssetSearchAssetCodeTF().getText();
-            issuer = getCtAssetSearchIssuerTF().getText();
-            response = changeTrust.getAssetByIssuer ( isMainNet, assetCode, issuer );
-
-            if ( response == null )
-                getCtAssetSearchReponseTA().setText("Unable to find asset");
-            else
-                getCtAssetSearchReponseTA().setText ( response.toString() );
-
-        } else { getCtAssetSearchReponseTA().setText("Please fill out all fields");}*/
-
-
-
     }
 
     /********** SCENE ACTIONS ************/
@@ -1375,27 +1357,27 @@ public class MainMenuController implements Initializable
         return knowTheAssetBut;
     }
 
-    public Pane getCtMainPane() {
+    private Pane getCtMainPane() {
         return ctMainPane;
     }
 
-    public Pane getCtSelectTrustPane() {
+    private Pane getCtSelectTrustPane() {
         return ctSelectTrustPane;
     }
 
-    public TextField getCtAssetSearchAssetCodeTF() {
+    private TextField getCtAssetSearchAssetCodeTF() {
         return ctAssetSearchAssetCodeTF;
     }
 
-    public TextField getCtAssetSearchIssuerTF() {
+    private TextField getCtAssetSearchIssuerTF() {
         return ctAssetSearchIssuerTF;
     }
 
-    public TextArea getCtAssetSearchReponseTA() {
+    private TextArea getCtAssetSearchReponseTA() {
         return ctAssetSearchReponseTA;
     }
 
-    public ComboBox getCtComboBox() {
+    private ComboBox getCtComboBox() {
         return ctComboBox;
     }
 }
