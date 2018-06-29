@@ -85,8 +85,13 @@ public class Resolve
     public static String assetsToDollar ( StellarAsset assets[] ) throws IOException {
         double totalPrice = 0;
         for ( StellarAsset asset : assets ) {
-            double temp = checkAssetPrice ( asset.getAssetName() );
-            totalPrice += ( temp * Double.parseDouble( asset.getAssetBalance() ) );
+            try {
+                double temp = checkAssetPrice(asset.getAssetName());
+                totalPrice += (temp * Double.parseDouble(asset.getAssetBalance()));
+            } catch ( Exception e )
+            {
+                totalPrice += 0;
+            }
         }
 
         return Format.parseDollarAmount ( String.valueOf ( totalPrice ) );

@@ -82,4 +82,6 @@ public class Format
     }
 
     public static String parseCursorUrl ( String url, String cursor ) { return String.format ( url, cursor ); }
+
+    public static String cleanAssetName ( String assetName ) { return assetName.substring(0, assetName.indexOf(":")); }
 }

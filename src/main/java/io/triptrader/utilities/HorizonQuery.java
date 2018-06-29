@@ -140,8 +140,13 @@ public class HorizonQuery
             JSONObject embeded = jsonObject.getJSONObject ( EMBEDED );
             JSONArray records = embeded.getJSONArray ( RECORDS );
 
-            if ( records.getJSONObject(1) != null)
+            try {
+                records.getJSONObject(1);
                 throw new Exception("1");
+            } catch ( Exception e ) {
+                System.out.println(records);
+                //throw new Exception("1");
+            }
 
             JSONObject newRecord = records.getJSONObject(0);
 

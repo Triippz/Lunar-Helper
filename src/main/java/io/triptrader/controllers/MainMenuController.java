@@ -24,11 +24,12 @@
 
 package io.triptrader.controllers;
 
+import io.triptrader.exception.SubmitTransactionException;
 import io.triptrader.models.*;
-import io.triptrader.models.assets.Assets;
 import io.triptrader.utilities.Alerts;
 import io.triptrader.utilities.ColumnRowFormatter;
 import io.triptrader.utilities.Resolve;
+import io.triptrader.utilities.Validate;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -52,7 +53,6 @@ import org.stellar.sdk.xdr.MemoType;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -73,6 +73,7 @@ public class MainMenuController implements Initializable
     private Payment payment;
     private AccountDetails accountDetails;
     private ChangeTrust changeTrust;
+    private CreateAsset createAsset;
 
     /******** PAGE INITS ******/
     @Override
@@ -94,9 +95,36 @@ public class MainMenuController implements Initializable
         getChangeTrustPane().setVisible(false);
     }
 
+    private void initCreateAssetPane ( )
+    {
+        clearAllPanes();
+        getCaResponsePane().setVisible(false);
+        getCreateAssetPane().setVisible(true);
+        getCaCreationPane().setVisible(true);
+
+        if ( getAssetTypeComboBox().getItems().isEmpty() )
+        {
+            ObservableList<String> assetTypes = FXCollections.observableArrayList();
+            assetTypes.add("ALPHANUM");
+            assetTypes.add("ALPHANUM4");
+            assetTypes.add("ALPHANUM12");
+
+            getAssetTypeComboBox().setItems ( assetTypes );
+        }
+    }
+
+    private void initCreateAssetResponsePane ( String response )
+    {
+        getCaCreationPane().setVisible(false);
+        getCaResponsePane().setVisible(true);
+        getCaResponsePaneTA().setText( response );
+
+    }
+
     private void clearChangeTrustPanes ( )
     {
         getCtSelectTrustPane().setVisible(false);
+        getCtChangeTrustPane().setVisible(false);
         getCtMainPane().setVisible(false);
     }
 
@@ -107,6 +135,7 @@ public class MainMenuController implements Initializable
         getChangeTrustPane().setVisible(true);
         getCtMainPane().setVisible(true);
     }
+
 
     private void initCTAssetSearch ( )
     {
@@ -126,7 +155,8 @@ public class MainMenuController implements Initializable
 
     private void initCTKnowAsset ( )
     {
-        getCtMainPane().setVisible(false);
+        clearChangeTrustPanes();
+        getCtChangeTrustPane().setVisible(true);
     }
 
     private void initAccountDetails ( )
@@ -152,6 +182,11 @@ public class MainMenuController implements Initializable
     private void initCreateAccount ( )
     {
         clearAllPanes();
+        getPvtKeyTxtField().clear();
+        getPublicKeyTxtFieldCA().clear();
+        getXdrTextArea().clear();
+        getUseAccountButton().setVisible(false);
+        //getCreateAccountButton().setVisible(true);
         getCreateAccountPane().setVisible(true);
     }
 
@@ -299,6 +334,8 @@ public class MainMenuController implements Initializable
             } catch (IOException e) {
                 response = e.getMessage();
                 Alert alert = new Alert(Alert.AlertType.INFORMATION, "Error Creating new Account!");
+                alert.showAndWait();
+                getXdrTextArea().setText(response);
             } finally {
                 getXdrTextArea().setVisible(true);
                 getXdrTextArea().setText(response);
@@ -366,8 +403,8 @@ public class MainMenuController implements Initializable
             case "By Asset":
                 getCtAssetSearchReponseTA().setText ( changeTrust.getAssetResponse (
                         isMainNet,
-                        getCtAssetSearchAssetCodeTF(),
-                        getCtAssetSearchIssuerTF() ) );
+                        getCtAssetSearchAssetCodeTF().getText(),
+                        getCtAssetSearchIssuerTF().getText() ) );
                 break;
 
             case "All Issuer's Assets":
@@ -380,6 +417,48 @@ public class MainMenuController implements Initializable
                 getCtAssetSearchReponseTA().setText("Please select a search type");
                 break;
         }
+    }
+
+    private String createAsset ( )
+    {
+        /* we need to have an active account to create an asset */
+        if ( userKey == null )
+        {
+            Alert alert = new Alert(Alert.AlertType.WARNING );
+            alert.setHeaderText("No Active Account");
+            alert.setContentText("Need an active funded account to create an asset. Would you like to use one now?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if ( result.get() == ButtonType.OK)
+                initDefaultPane();
+        } else if ( createAsset == null && userKey != null )
+            createAsset = new CreateAsset ( userKey );
+
+        boolean createNewAccount = false;
+        if ( getYesCheckBox().isSelected() )
+            createNewAccount = true;
+        else if ( getNoCheckBox().isSelected() )
+            createNewAccount = false;
+        else if ( getYesCheckBox().isSelected() && getNoCheckBox().isSelected() )
+            return "Please select either \"Yes\" or \"No\"";
+
+        String response;
+        try {
+            response = createAsset.createNewAsset( isMainNet,
+                    getCaAssetCodeTextField().getText(),
+                    getCaTrustLimitTextField().getText(),
+                    getCaAmtSendTextBox().getText(),
+                    getCaTomlLocationTextField().getText(),
+                    getAuthRequiredCheckBox().isSelected(),
+                    getAuthRevocableCheckBox().isSelected(),
+                    createNewAccount ,
+                    getCaRecvLocationTextField().getText(),
+                    getAssetTypeComboBox() );
+        } catch (SubmitTransactionException e) {
+            response = e.getMessage();
+            e.printStackTrace();
+        }
+
+        return response;
     }
 
     /********** SCENE ACTIONS ************/
@@ -598,7 +677,56 @@ public class MainMenuController implements Initializable
     }
 
     @FXML
-    public void ctUseAssetSearchClick ( ) { }
+    public void ctUseAssetSearchClick ( ) {
+
+    }
+
+    @FXML
+    public void ctChangeTrustClick ( ) {
+        /* we need to have an active account to create an asset */
+        if ( userKey == null )
+        {
+            Alert alert = new Alert(Alert.AlertType.WARNING );
+            alert.setHeaderText("No Active Account");
+            alert.setContentText("Need an active funded account to change trust line. Would you like to use one now?");
+            Optional<ButtonType> result = alert.showAndWait();
+            if ( result.get() == ButtonType.OK)
+                initDefaultPane();
+        } else if ( changeTrust == null && userKey != null )
+            changeTrust = new ChangeTrust ( userKey );
+
+        try {
+            String response = changeTrust.changeTrust (
+                    isMainNet,
+                    getCtChangeTrustAssetTF().getText(),
+                    getCtChangeTrustIssuerAccountTF().getText(),
+                    getCtChangeTrustLimitTF().getText() );
+            System.out.println(response);
+        } catch (Exception e) {
+            if ( e.getMessage().contains("No Asset found" ) )
+            {
+                Alert alert = new Alert(Alert.AlertType.WARNING );
+                alert.setHeaderText("No Asset");
+                alert.setContentText("No asset found\n" + e.getMessage());
+            }else {
+                getCtChangeTrustErrorLabel().setVisible(true);
+                getCtChangeTrustIssuerAccountLabel().setVisible(true);
+                getCtChangeTrustIssuerAccountTF().setVisible(true);
+            }
+        }
+    }
+
+    @FXML
+    public void createAssetClick ( ) {
+        initCreateAssetPane ( );
+    }
+
+    @FXML
+    public void caCreateAssetClick ( )
+    {
+       String reponse = createAsset ( );
+       initCreateAssetResponsePane ( reponse );
+    }
 
 
     /*********************************************
@@ -616,6 +744,12 @@ public class MainMenuController implements Initializable
         System.exit(0);
     }
 
+    @FXML
+    public void changeAccountMenuClick ( )
+    {
+        getPrivateKeyField().clear();
+        initDefaultPane();
+    }
 
 
     /* SCENE CONTROLS */
@@ -767,6 +901,48 @@ public class MainMenuController implements Initializable
     private TextArea ctAssetSearchReponseTA;
     @FXML
     private ComboBox ctComboBox;
+    @FXML
+    private Pane ctChangeTrustPane;
+    @FXML
+    private TextField ctChangeTrustAssetTF;
+    @FXML
+    private TextField ctChangeTrustLimitTF;
+    @FXML
+    private Button ctChangeTrustButton;
+    @FXML
+    private Pane caCreationPane;
+    @FXML
+    private Pane caResponsePane;
+    @FXML
+    private CheckBox authRequiredCheckBox;
+    @FXML
+    private CheckBox authRevocableCheckBox;
+    @FXML
+    private ComboBox assetTypeComboBox;
+    @FXML
+    private CheckBox yesCheckBox;
+    @FXML
+    private CheckBox noCheckBox;
+    @FXML
+    private TextField caAssetCodeTextField;
+    @FXML
+    private TextField caTrustLimitTextField;
+    @FXML
+    private TextField caTomlLocationTextField;
+    @FXML
+    private TextField caRecvLocationTextField;
+    @FXML
+    private TextField caAmtSendTextBox;
+    @FXML
+    private Button caCreateButton;
+    @FXML
+    private TextArea caResponsePaneTA;
+    @FXML
+    private Label ctChangeTrustErrorLabel;
+    @FXML
+    private Label ctChangeTrustIssuerAccountLabel;
+    @FXML
+    private TextField ctChangeTrustIssuerAccountTF;
 
     public AnchorPane getMainAncPane() {
         return mainAncPane;
@@ -1379,5 +1555,89 @@ public class MainMenuController implements Initializable
 
     private ComboBox getCtComboBox() {
         return ctComboBox;
+    }
+
+    private Pane getCtChangeTrustPane() {
+        return ctChangeTrustPane;
+    }
+
+    private TextField getCtChangeTrustAssetTF() {
+        return ctChangeTrustAssetTF;
+    }
+
+    private TextField getCtChangeTrustLimitTF() {
+        return ctChangeTrustLimitTF;
+    }
+
+    private Button getCtChangeTrustButton() {
+        return ctChangeTrustButton;
+    }
+
+    private Pane getCaCreationPane() {
+        return caCreationPane;
+    }
+
+    private Pane getCaResponsePane() {
+        return caResponsePane;
+    }
+
+    private CheckBox getAuthRequiredCheckBox() {
+        return authRequiredCheckBox;
+    }
+
+    private CheckBox getAuthRevocableCheckBox() {
+        return authRevocableCheckBox;
+    }
+
+    private ComboBox getAssetTypeComboBox() {
+        return assetTypeComboBox;
+    }
+
+    private CheckBox getYesCheckBox() {
+        return yesCheckBox;
+    }
+
+    private CheckBox getNoCheckBox() {
+        return noCheckBox;
+    }
+
+    private TextField getCaAssetCodeTextField() {
+        return caAssetCodeTextField;
+    }
+
+    private TextField getCaTrustLimitTextField() {
+        return caTrustLimitTextField;
+    }
+
+    private TextField getCaTomlLocationTextField() {
+        return caTomlLocationTextField;
+    }
+
+    private TextField getCaRecvLocationTextField() {
+        return caRecvLocationTextField;
+    }
+
+    private TextField getCaAmtSendTextBox() {
+        return caAmtSendTextBox;
+    }
+
+    private Button getCaCreateButton() {
+        return caCreateButton;
+    }
+
+    private TextArea getCaResponsePaneTA() {
+        return caResponsePaneTA;
+    }
+
+    private Label getCtChangeTrustErrorLabel() {
+        return ctChangeTrustErrorLabel;
+    }
+
+    private Label getCtChangeTrustIssuerAccountLabel() {
+        return ctChangeTrustIssuerAccountLabel;
+    }
+
+    private TextField getCtChangeTrustIssuerAccountTF() {
+        return ctChangeTrustIssuerAccountTF;
     }
 }

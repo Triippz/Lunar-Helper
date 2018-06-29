@@ -63,6 +63,13 @@
             <version>20180130</version>
         </dependency>
 
+        <dependency>
+            <groupId>de.jensd</groupId>
+            <artifactId>fontawesomefx-commons</artifactId>
+            <version>9.1.2</version>
+            <type>pom</type>
+        </dependency>
+
     </dependencies>
 
     <!-- Build Params -->

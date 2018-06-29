@@ -48,7 +48,6 @@ import org.stellar.sdk.xdr.Transaction;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Base64;
 
@@ -68,7 +67,6 @@ public class AccountDetails
     public String getNativeBalance ( boolean isMainNet )  {
         Server server = Connections.getServer ( isMainNet );
         String balanceAmount = null;
-        String tempBal = null;
 
         try {
             AccountResponse.Balance balances[] = server.accounts().account(pair).getBalances();
@@ -202,6 +200,10 @@ public class AccountDetails
                     String asset = Resolve.assetName( ( ( PaymentOperationResponse ) response ).getAsset() );
                     String time = Format.time ( response.getCreatedAt() );
 
+                    /* just incase the public key is appended to the assetname */
+                    if ( asset.contains(":") )
+                        asset = Format.cleanAssetName ( asset );
+
                     transactions.add( new Transactions(
                             asset, amount, time, false) );
                 }
@@ -210,6 +212,10 @@ public class AccountDetails
                     String amount = Format.sentPayment ( ( ( PaymentOperationResponse ) response ).getAmount() );
                     String asset = Resolve.assetName( ( ( PaymentOperationResponse ) response ).getAsset() );
                     String time = Format.time ( response.getCreatedAt() );
+
+                    /* just incase the public key is appended to the assetname */
+                    if ( asset.contains(":") )
+                        asset = Format.cleanAssetName ( asset );
 
                     transactions.add( new Transactions(
                             asset, amount, time, true) );
@@ -312,6 +318,10 @@ public class AccountDetails
                     String asset = Resolve.assetName( ( ( PaymentOperationResponse ) response ).getAsset() );
                     String from = ( ( PaymentOperationResponse) response ).getFrom().getAccountId();
                     String time = Format.time ( response.getCreatedAt() );
+
+                    /* just incase the public key is appended to the assetname */
+                    if ( asset.contains(":") )
+                        asset = Format.cleanAssetName ( asset );
 
                     transactions.add( new Transactions(
                             asset, amount, time, from, false ) );

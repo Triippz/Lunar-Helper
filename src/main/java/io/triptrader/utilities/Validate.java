@@ -22,8 +22,9 @@
  * SOFTWARE.
  */
 
-package io.triptrader.models;
+package io.triptrader.utilities;
 
+import io.triptrader.models.AccountDetails;
 import io.triptrader.models.assets.StellarAsset;
 import io.triptrader.utilities.Connections;
 import org.stellar.sdk.KeyPair;
@@ -109,6 +110,28 @@ public class Validate
                 break;
         }
         return MEMO_OK;
+    }
+
+    public static boolean limitInBounds ( String limit )
+    {
+        int digits = 0;
+        boolean delimHit = false;
+
+        if ( !limit.contains(".") )
+            return true;
+
+        for ( int i = 0; i < limit.length(); i++ )
+        {
+            while ( !delimHit )
+            {
+                if ( limit.charAt(i) == '.')
+                    delimHit = true;
+            }
+            if ( delimHit )
+                digits++;
+        }
+
+        return digits <= 7;
     }
 
 }
